@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ bean['Name'] }} - Roast Profile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- External CSS -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #4b3832;
+            color: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: #4b3832;
+        }
+        .bean-info, .instructions, .chart {
+            margin-bottom: 40px;
+        }
+        .bean-info table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .bean-info th, .bean-info td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .bean-info th {
+            background-color: #f5f5f5;
+            text-align: left;
+        }
+        .chart img {
+            max-width: 100%;
+            height: auto;
+        }
+        .footer {
+            background-color: #4b3832;
+            color: #f5f5f5;
+            text-align: center;
+            padding: 10px;
+        }
+        /* Responsive Styles */
+        @media (max-width: 600px) {
+            header, .container, .footer {
+                padding: 10px;
+            }
+            .bean-info table, .bean-info th, .bean-info td {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>{{ bean['Name'] }} Roast Profile</h1>
+        <p>Experience the journey of your coffee from bean to cup</p>
+    </header>
+    <div class="container">
+        <!-- Bean Information Section -->
+        <section class="bean-info">
+            <h2>About the Bean</h2>
+            <table>
+                <tr>
+                    <th>Origin</th>
+                    <td>{{ bean['Origin'] }}</td>
+                </tr>
+                <tr>
+                    <th>Altitude</th>
+                    <td>{{ bean['Altitude'] }}</td>
+                </tr>
+                <tr>
+                    <th>Varietal</th>
+                    <td>{{ bean['Varietal'] }}</td>
+                </tr>
+                <tr>
+                    <th>Processing Method</th>
+                    <td>{{ bean['Processing Method'] }}</td>
+                </tr>
+                <tr>
+                    <th>Taste Notes</th>
+                    <td>{{ bean['Taste Notes'] }}</td>
+                </tr>
+                <tr>
+                    <th>Aroma</th>
+                    <td>{{ bean['Aroma'] }}</td>
+                </tr>
+                <tr>
+                    <th>Acidity</th>
+                    <td>{{ bean['Acidity'] }}</td>
+                </tr>
+                <tr>
+                    <th>Origin Description</th>
+                    <td>{{ bean['Origin Description'] }}</td>
+                </tr>
+                <tr>
+                    <th>Brew Methods</th>
+                    <td>{{ bean['Brew Methods'] }}</td>
+                </tr>
+                <tr>
+                    <th>Harvest Date</th>
+                    <td>{{ bean['Harvest Date'] }}</td>
+                </tr>
+                <tr>
+                    <th>Grade</th>
+                    <td>{{ bean['Grade'] }}</td>
+                </tr>
+                <tr>
+                    <th>Cupping Score</th>
+                    <td>{{ bean['Cupping Score'] }}</td>
+                </tr>
+                <tr>
+                    <th>Certifications</th>
+                    <td>{{ bean['Certifications'] }}</td>
+                </tr>
+            </table>
+            <h3>Vendor Notes</h3>
+            <p>{{ bean['Vendor Cupping Notes'] }}</p>
+            <p>{{ bean['Vendor Farm Notes'] }}</p>
+        </section>
+
+        <!-- Roast Chart Section -->
+        <section class="chart">
+            <h2>Roast Profile Chart</h2>
+            <img src="{{ roast_chart }}" alt="Roast Profile Chart">
+        </section>
+
+        <!-- Instructions Section -->
+        <section class="instructions">
+            <h2>How to Read the Roast Profile Chart</h2>
+            <p>The roast profile chart visualizes the transformation of the coffee beans during the roasting process. Here's how to interpret the chart:</p>
+            <ul>
+                <li><strong>Bean Temperature (BT):</strong> The main line showing the actual temperature of the coffee beans over time.</li>
+                <li><strong>Rate of Rise (RoR):</strong> Indicates the rate at which the bean temperature is increasing. A declining RoR is typical in a well-controlled roast.</li>
+                <li><strong>Drum Temperature (DT):</strong> Represents the temperature inside the roaster drum.</li>
+                <li><strong>Power, Fan, and Drum Speed Settings:</strong> Displayed as step lines showing adjustments made during the roast to control the heat application and airflow.</li>
+                <li><strong>Key Phases:</strong>
+                    <ul>
+                        <li><strong>Drying Phase:</strong> From the start until the beans turn yellow. Moisture is being removed.</li>
+                        <li><strong>Maillard Phase:</strong> Beans begin to brown due to sugar caramelization and Maillard reactions.</li>
+                        <li><strong>First Crack:</strong> Beans expand and release steam, marking the start of development phase.</li>
+                    </ul>
+                </li>
+            </ul>
+            <p>Understanding this chart helps in appreciating the craft that goes into roasting your coffee to perfection.</p>
+        </section>
+    </div>
+    <footer class="footer">
+        <p>&copy; {{ current_year }} The Java Framework. Made with coffee and love ❤️</p>
+    </footer>
+</body>
+</html>
