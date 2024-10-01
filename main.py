@@ -145,9 +145,9 @@ def process_roast(file_path):
     roast_number = data_json.get('roastNumber', '1')
 
     # define local directories
+    roast_directory = f'{roast_number}'
     qr_codes_directory = os.path.join('qr_codes')
     assets_directory = os.path.join(roast_directory, 'assets')
-    roast_directory = f'{roast_number}'
 
     # create directories if they don't exist
     os.makedirs(assets_directory, exist_ok=True)
@@ -190,7 +190,7 @@ def process_roast(file_path):
     upload_to_s3(webpage_local_path, S3_BUCKET_NAME, webpage_s3_key)
     
     # generate QR code
-    roast_url = f'{S3_BASE_URL}{roast_directory}/'
+    roast_url = f'{S3_BASE_URL}{roast_directory}/index.html'
     generate_qr_code(roast_url, qr_code_local_path)
     # upload_to_s3(qr_code_local_path, S3_BUCKET_NAME, qr_code_s3_key)
     
