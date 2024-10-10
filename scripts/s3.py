@@ -1,21 +1,24 @@
-
 import logging
 import boto3
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 def upload_to_s3(local_file_path, bucket_name, s3_key, content_type):
-    session = boto3.Session(profile_name='coffee')
-    s3_client = session.client('s3')
+    session = boto3.Session(profile_name="coffee")
+    s3_client = session.client("s3")
 
     try:
-        # content_type = 'text/html' if s3_key.endswith('.html') else 'image/png'
-        s3_client.upload_file(local_file_path, bucket_name, s3_key, ExtraArgs={'ContentType': content_type})
-        logging.info(f'Uploaded {local_file_path} to s3://{bucket_name}/{s3_key}')
+        s3_client.upload_file(
+            local_file_path,
+            bucket_name,
+            s3_key,
+            ExtraArgs={"ContentType": content_type},
+        )
+        logging.info(f"Uploaded {local_file_path} to s3://{bucket_name}/{s3_key}")
         return True
     except Exception as e:
-        logging.error(f'Failed to upload {local_file_path} to S3: {e}')
+        logging.error(f"Failed to upload {local_file_path} to S3: {e}")
         return False
-
-

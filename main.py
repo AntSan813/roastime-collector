@@ -18,9 +18,8 @@ from scripts.html_template import generate_qr_code, generate_webpage
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
-S3_BUCKET_NAME = "coffee-profiles"
-S3_BASE_URL = f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/"
+S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
+S3_BASE_URL = os.getenv("S3_BASE_URL")
 
 
 def copy_and_overwrite(from_path, to_path):

@@ -1,15 +1,10 @@
 import logging
 import csv
-import math
 from datetime import datetime
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
-S3_BUCKET_NAME = "coffee-profiles"
-S3_BASE_URL = f"https://{S3_BUCKET_NAME}.s3.amazonaws.com/"
-ROAST_PROFILE_TEMPLATE = "template.html"
 
 
 def get_roast_level(weight_loss_percentage):
