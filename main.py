@@ -5,6 +5,7 @@ import time
 import sys
 import os
 import argparse
+from dotenv import load_dotenv
 import matplotlib
 
 matplotlib.use("Agg")  # Use the Anti-Grain Geometry backend
@@ -18,8 +19,8 @@ from scripts.html_template import generate_qr_code, generate_webpage
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-S3_BUCKET_NAME = os.getenv("S3_BUCKET_NAME")
-S3_BASE_URL = os.getenv("S3_BASE_URL")
+
+load_dotenv()
 
 
 def copy_and_overwrite(from_path, to_path):
@@ -29,6 +30,9 @@ def copy_and_overwrite(from_path, to_path):
 
 
 def process_roast(file_path, test=False):
+    base_url = os.getenv("S3_BASE_URL")
+    bucket_name = os.getenv("S3_BUCKET_NAME")
+    print(base_url, bucket_name)
     logging.info(f"Processing roast file: {file_path}")
 
     # first, load the roast data
@@ -76,28 +80,28 @@ def process_roast(file_path, test=False):
     # upload files to s3
     webpage_s3_key = f"{roast_directory}/{webpage_filename}"
     # TODO: consider batching uploads
-    upload_to_s3(webpage_local_path, S3_BUCKET_NAME, webpage_s3_key, "text/html")
+    upload_to_s3(webpage_local_path, bucket_name, webpage_s3_key, "text/html")
     upload_to_s3(
         f"{assets_directory}/chart.js",
-        S3_BUCKET_NAME,
+        bucket_name,
         f"{assets_directory}/chart.js",
         "application/javascript",
     )
     upload_to_s3(
         f"{assets_directory}/logo.png",
-        S3_BUCKET_NAME,
+        bucket_name,
         f"{assets_directory}/logo.png",
         "image/png",
     )
     upload_to_s3(
         f"{assets_directory}/styles.css",
-        S3_BUCKET_NAME,
+        bucket_name,
         f"{assets_directory}/styles.css",
         "text/css",
     )
 
     # generate QR code
-    roast_url = f"{S3_BASE_URL}{roast_directory}/index.html"
+    roast_url = f"{base_url}{roast_directory}/index.html"
 
     # generate QR code
     qr_codes_directory = os.path.join("qr_codes")
