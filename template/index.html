@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{ bean['Name'] }} - Roast Profile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- LIBRARIES-->
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Highcharts -->
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/xrange.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/annotations.js"></script>
+
+    <!-- STYLESHEETS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link rel="stylesheet" href="assets/styles.css">
+
+    <script>
+        var roastData = {{ bean | safe }};
+    </script>
+</head>
+
+<body>
+    <header class="masthead mb-auto text-center">
+        <div class="px-5 align-items-center justify-content-between">
+            <a href="https://d3069d-3.myshopify.com/">
+                <img src="assets/logo.png" height="124px">
+            </a>
+        </div>
+    </header>
+    <div class="container">
+        <section class="section overview">
+            <div class="row justify-content-stretch">
+                <div class="col-12">
+                    <div class="row justify-content-between align-items-center">
+                        <div class="col">
+                            <h2 id="bean-name"></h2>
+                        </div>
+                        <div class="col text-end">
+                            <a href="{{ bean['Link'] }}">
+                                <button type="button" class="btn btn-lg btn-primary">Buy Now</button>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 mt-3">
+                    <div class="row g-3">
+                        <div class="col-12 col-sm-4">
+                            <div class="card h-100 text-center">
+                                <div class="card-body">
+                                    <h5>
+                                        Roast Date
+                                    </h5>
+                                    <div id="roast-date"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <div class="card h-100 text-center">
+                                <div class="card-body">
+                                    <h5>
+                                        Roast Level
+                                    </h5>
+                                    <div id="roast-level"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <div class="card h-100 text-center">
+                                <div class="card-body">
+                                    <h5>
+                                        Size
+                                        <i class="fa-regular fa-question-circle" data-toggle="tooltip"
+                                            title="The weight of the roasted coffee package"></i>
+                                    </h5>
+                                    <div id="weight-roasted"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 mt-4">
+                    <table class="table">
+                        <tr>
+                            <th>
+                                Roast Length
+                                <i class="fa-regular fa-question-circle" data-toggle="tooltip"
+                                    title="The total duration of the roasting process"></i>
+                            </th>
+                            <td>
+                                <div id="roast-length"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                Raw Coffee Weight
+                                <i class="fa-regular fa-question-circle" data-toggle="tooltip"
+                                    title="The weight of the unroasted green coffee beans"></i>
+                            </th>
+                            <td>
+                                <div id="weight-green"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                Harvest Date
+                                <i class="fa-regular fa-question-circle" data-toggle="tooltip"
+                                    title="The date when the coffee cherries were harvested"></i>
+                            </th>
+                            <td>
+                                <div id="harvest-date"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                Grade
+                                <i class="fa-regular fa-question-circle" data-toggle="tooltip"
+                                    title="The quality grade assigned to the coffee beans"></i>
+                            </th>
+                            <td>
+                                <div id="grade"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                Certifications
+                                <i class="fa-regular fa-question-circle" data-toggle="tooltip"
+                                    title="Any certifications the coffee holds (e.g., Organic, Fair Trade)"></i>
+                            </th>
+                            <td>
+
+                                <div id="certifications"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <section class="section bean-info mt-4">
+                    <h2>About the Bean</h2>
+                    <table class="table">
+                        <tr>
+                            <th>
+                                Origin
+                                <i class="fa-regular fa-question-circle" data-toggle="tooltip"
+                                    title="The country where the coffee was grown"></i>
+                            </th>
+                            <td>
+                                <div id="origin"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                Varietal
+                                <i class="fa-regular fa-question-circle" data-toggle="tooltip"
+                                    title="The type or subspecies of the coffee plant"></i>
+                            </th>
+                            <td>
+                                <div id="varietal"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                Processing Method
+                                <i class="fa-regular fa-question-circle" data-toggle="tooltip"
+                                    title="How the coffee beans were processed after harvesting"></i>
+                            </th>
+                            <td>
+                                <div id="processing-method"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                Altitude
+                                <i class="fa-regular fa-question-circle" data-toggle="tooltip"
+                                    title="The elevation at which the coffee was grown"></i>
+                            </th>
+                            <td>
+                                <div id="altitude"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                Taste Notes
+                                <i class="fa-regular fa-question-circle" data-toggle="tooltip"
+                                    title="Descriptive notes about the taste of the coffee"></i>
+                            </th>
+                            <td>
+                                <div id="taste-notes"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                Aroma
+                                <i class="fa-regular fa-question-circle" data-toggle="tooltip"
+                                    title="The fragrance and smell characteristics of the coffee"></i>
+                            </th>
+                            <td>
+                                <div id="aroma"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                Acidity
+                                <i class="fa-regular fa-question-circle" data-toggle="tooltip"
+                                    title="The perceived acidity level in the coffee's taste"></i>
+                            </th>
+                            <td>
+                                <div id="acidity"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                Brew Methods
+                                <i class="fa-regular fa-question-circle" data-toggle="tooltip"
+                                    title="Recommended brewing methods for this coffee"></i>
+                            </th>
+                            <td>
+                                <div id="brew-methods"></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>
+                                Cupping Score
+                                <i class="fa-regular fa-question-circle" data-toggle="tooltip"
+                                    title="A score reflecting the coffee's quality as evaluated by a professional"></i>
+                            </th>
+                            <td>
+                                <div id="cupping-score"></div>
+                            </td>
+                        </tr>
+                    </table>
+                </section>
+
+                <section class="section roast-data mt-4">
+                    <h2>Roast Chart</h2>
+                    <div style="width: 100%;">
+                        <div id="roast-chart"></div>
+                    </div>
+                    <div id="chart-description"
+                        style="font-family: Arial, sans-serif; font-size: 14px; margin-top: 20px;">
+                        <h3>Understanding the Coffee Roast Chart</h3>
+                        <p>
+                            This chart visualizes the coffee roasting process over time. It shows how temperature and
+                            various
+                            settings influence the transformation of coffee beans.
+                        </p>
+                        <ul>
+                            <li>
+                                <strong>Bean Temperature (Blue Line):</strong> Indicates how the temperature of the
+                                coffee beans
+                                rises during roasting.
+                            </li>
+                            <li>
+                                <strong>Drum Temperature (Purple Line):</strong> Shows the temperature inside the
+                                roasting drum.
+                            </li>
+                            <li>
+                                <strong>Rate of Rise (RoR) Lines:</strong> Represent how quickly temperatures change. A
+                                higher
+                                RoR means the beans are heating up fa-regularter.
+                            </li>
+                            <li>
+                                <strong>Control Bars at the Bottom:</strong> Display changes in roasting settings over
+                                time. The
+                                numbers indicate the level of each setting:
+                                <ul>
+                                    <li>
+                                        <strong>Power (0 to 9):</strong> Controls the heat applied. A higher number
+                                        means more
+                                        heat, affecting how quickly the beans roast.
+                                    </li>
+                                    <li>
+                                        <strong>Fan (0 to 9):</strong> Regulates airflow inside the roaster. Increasing
+                                        the fan
+                                        speed cools the beans and removes smoke.
+                                    </li>
+                                    <li>
+                                        <strong>Drum Speed (0 to 9):</strong> Adjusts how fa-regulart the drum rotates.
+                                        A
+                                        higher speed
+                                        ensures even heating by moving the beans more.
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong>Key Events Marked on the Chart:</strong>
+                                <ul>
+                                    <li>
+                                        <strong>Yellowing:</strong> The beans begin to turn yellow, losing their green
+                                        color. This marks the start of significant chemical changes.
+                                    </li>
+                                    <li>
+                                        <strong>First Crack:</strong> The beans make popping sounds, similar to popcorn.
+                                        This indicates that the beans have reached a crucial stage where they begin to
+                                        develop
+                                        their flavor and aroma.
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>
+                                <strong>Roast Phases:</strong> The background colors indicate different stages:
+                                <ul>
+                                    <li><strong>Drying Phase:</strong> Beans lose moisture and turn from green to
+                                        yellow.</li>
+                                    <li><strong>Maillard Phase:</strong> Chemical reactions develop flavors and aromas.
+                                    </li>
+                                    <li><strong>Development Phase:</strong> Beans undergo final transformations
+                                        affecting taste.
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+
+
+
+            </div>
+        </section>
+    </div>
+
+    <script src="assets/chart.js"></script>
+    <script>
+        const metricTypeSpeed = 200;
+
+        const beanMetrics = {
+            "bean-name": `{{ bean['Name'] }}`,
+            "roast-date": "{{ bean['Roast Date'] }}",
+            "roast-level": "{{ bean['Roast Level']  }}",
+            "weight-green": "{{ bean['Weight Green'] }} oz",
+            "weight-roasted": "{{ bean['Weight Roasted'] }} oz",
+            "roast-length": "{{ bean['Roast Length'] }} min",
+            "harvest-date": "{{ bean['Harvest Date'] }}",
+            "grade": "{{ bean['Grade'] }}",
+            "certifications": "{{ bean['Certifications'] }}",
+            "origin": "{{ bean['Origin'] }}",
+            "varietal": "{{ bean['Varietal'] }}",
+            "processing-method": "{{ bean['Processing Method'] }}",
+            "altitude": "{{ bean['Altitude'] }}",
+            "taste-notes": "{{ bean['Taste Notes'] }}",
+            "aroma": "{{ bean['Aroma'] }}",
+            "acidity": "{{ bean['Acidity'] }}",
+            "brew-methods": "{{ bean['Brew Methods'] }}",
+            "cupping-score": "{{ bean['Cupping Score'] }}",
+        };
+
+        Object.entries(beanMetrics).forEach(([key, value]) => {
+            new Typed(`#${key}`, {
+                strings: [value],
+                showCursor: false,
+                typeSpeed: metricTypeSpeed,
+            });
+        });
+
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl, {
+                trigger: 'click'
+            });
+        });
+    </script>
+</body>
+<footer class="footer mt-4 text-center">
+    <p>&copy; {{ current_year }} The Java Framework. Made with coffee and love ❤️</p>
+    <p style="font-size: 12px; color: gray;">This page was autogenerated based on the roasting data.</p>
+</footer>
+
+</html>
