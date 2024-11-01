@@ -11,6 +11,7 @@ import matplotlib
 matplotlib.use("Agg")  # Use the Anti-Grain Geometry backend
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
+from datetime import datetime
 
 from scripts.s3 import upload_to_s3
 from scripts.roast_data import extract_roast_data, load_bean_metadata, get_bean_info
@@ -40,7 +41,8 @@ def process_roast(file_path, test=False):
         roast_data_json = json.load(f)
 
     # generate unique identifiers for output files
-    roast_id = roast_data_json.get("uid", "1")
+    # set roast id to current date in the format of DDMMYYYYMMSS
+    roast_id = datetime.now().strftime("%d%m%Y%H%M%S")
 
     # define local directories
     roast_directory = f"roasts/{roast_id}"
@@ -110,6 +112,7 @@ def process_roast(file_path, test=False):
     qr_code_local_path = os.path.join(qr_codes_directory, roast_qr_code_filename)
     generate_qr_code(roast_url, qr_code_local_path)
 
+    logging.info(f"Roast Profile generated: {roast_url}")
     logging.info(f"Processing of {file_path} completed.")
 
 

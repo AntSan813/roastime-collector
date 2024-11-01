@@ -79,6 +79,7 @@ def extract_roast_data(data_json):
             * 100,
             2,
         ),
+        "Roast ID": data_json.get("uid", "1"),
         "Time List": time_list,
         "Bean Temp": bean_temp,
         "IBTS Temp": ibts_temp,

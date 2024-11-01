@@ -2,10 +2,6 @@ from jinja2 import Environment, FileSystemLoader
 from datetime import datetime
 import logging
 import os
-import matplotlib
-
-matplotlib.use("Agg")  # Use the Anti-Grain Geometry backend
-import matplotlib.pyplot as plt
 import qrcode
 
 logging.basicConfig(
