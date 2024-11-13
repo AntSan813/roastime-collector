@@ -1,2 +1,6 @@
 
 .env
+
+/cache
+/roasts
+/qr_codes

@@ -15,11 +15,9 @@ def generate_qr_code(url, output_path):
     logging.info(f"QR code saved as {output_path}")
 
 
-def generate_webpage(
-    roast_data,
-):
+def generate_webpage(roast_data):
     env = Environment(loader=FileSystemLoader("."))
-    template = env.get_template("template/index.html")
+    template = env.get_template("templates/pages/roast_profile.html")
     ga_tracking_id = os.getenv("GA_TRACKING_ID")
 
     # prepare data for the template

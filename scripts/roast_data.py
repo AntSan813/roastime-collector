@@ -1,6 +1,7 @@
 import logging
-import csv
 from datetime import datetime
+
+BEANS_DATA = "data/beans.json"
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -13,7 +14,7 @@ def get_roast_level(weight_loss_percentage):
     elif 11 <= weight_loss_percentage < 13:
         return "Medium"
     elif 13 <= weight_loss_percentage < 15:
-        return "Medium-Dark"
+        return "Medium Dark"
     else:
         return "Dark"
 
@@ -61,49 +62,34 @@ def extract_roast_data(data_json):
     weight_loss_percentage = ((weight_green - weight_roasted) / weight_green) * 100
 
     return {
-        "Roast Date": datetime.fromtimestamp(data_json["dateTime"] / 1000).strftime(
+        "roast_date": datetime.fromtimestamp(data_json["dateTime"] / 1000).strftime(
             "%m/%d/%Y"
         ),
-        "Roast Length": round(
+        "roast_length": round(
             data_json["totalRoastTime"] / 60, 2
         ),  # convert seconds to minutes
-        "Weight Green": round(
+        "weight_green": round(
             data_json["weightGreen"] * 0.035274, 2
         ),  # convert grams to ounces
-        "Weight Roasted": round(
+        "weight_roasted": round(
             data_json["weightRoasted"] * 0.035274, 2
         ),  # convert grams to ounces
-        "Weight Loss": round(
+        "weight_loss": round(
             (data_json["weightGreen"] - data_json["weightRoasted"])
             / data_json["weightGreen"]
             * 100,
             2,
         ),
-        "Roast ID": data_json.get("uid", "1"),
-        "Time List": time_list,
-        "Bean Temp": bean_temp,
-        "IBTS Temp": ibts_temp,
-        "Bean RoR": bean_ror,
-        "IBTS RoR": ibts_ror,
-        "Power": power,
-        "Fan": fan,
-        "Drum": drum,
-        "Roast Level": get_roast_level(weight_loss_percentage),
+        "roast_id": data_json.get("uid", "1"),
+        "time_list": time_list,
+        "bean_temp": bean_temp,
+        "ibts_temp": ibts_temp,
+        "bean_ror": bean_ror,
+        "ibts_ror": ibts_ror,
+        "power": power,
+        "fan": fan,
+        "drum": drum,
+        "roast_level": get_roast_level(weight_loss_percentage),
+        "id": data_json.get("uid", "1"),
         **data_json,
     }
-
-
-def load_bean_metadata(csv_file="beans.csv"):
-    beans_data = []
-    with open(csv_file, "r", encoding="utf-8-sig") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            beans_data.append(row)
-    return beans_data
-
-
-def get_bean_info(bean_id, beans_data):
-    for bean in beans_data:
-        if bean["Bean ID"] == bean_id:
-            return bean
-    return None

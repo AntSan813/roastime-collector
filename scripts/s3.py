@@ -1,13 +1,15 @@
 import logging
 import boto3
 
+S3_PROFILE = "coffee"
+
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 
 def upload_to_s3(local_file_path, bucket_name, s3_key, content_type):
-    session = boto3.Session(profile_name="coffee")
+    session = boto3.Session(profile_name=S3_PROFILE)
     s3_client = session.client("s3")
 
     try:

@@ -1,0 +1,73 @@
+<div class="modal fade" id="addBeanModal" tabindex="-1" aria-labelledby="addBeanModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addBeanModalLabel">Add/Edit Bean</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{{ url_for('add_bean') }}" id="beanForm">
+          <input type="hidden" id="beanId" name="id" value="{{ beanId }}">
+
+          <div class="mb-3">
+            <label for="name" class="form-label">Bean Name</label>
+            <input type="text" class="form-control" id="name" name="name" required>
+          </div>
+          <div class="mb-3">
+            <label for="origin" class="form-label">Origin</label>
+            <input type="text" class="form-control" id="origin" name="origin" required>
+          </div>
+          <div class="mb-3">
+            <label for="taste_notes" class="form-label">Taste Notes</label>
+            <textarea class="form-control" id="taste_notes" name="taste_notes" rows="3"></textarea>
+          </div>
+          <p>
+            <a class="text-decoration-none" data-bs-toggle="collapse" href="#advancedOptions" role="button"
+              aria-expanded="false" aria-controls="advancedOptions">
+              + Advanced Options
+            </a>
+          </p>
+          <div class="collapse" id="advancedOptions">
+            <div class="mb-3">
+              <label for="region" class="form-label">Region</label>
+              <input type="text" class="form-control" id="region" name="region">
+            </div>
+            <div class="mb-3">
+              <label for="varietal" class="form-label">Varietal</label>
+              <input type="text" class="form-control" id="varietal" name="varietal">
+            </div>
+            <div class="mb-3">
+              <label for="processing_method" class="form-label">Processing Method</label>
+              <input type="text" class="form-control" id="processing_method" name="processing_method">
+            </div>
+            <div class="mb-3">
+              <label for="altitude" class="form-label">Altitude</label>
+              <input type="text" class="form-control" id="altitude" name="altitude">
+            </div>
+            <div class="mb-3">
+              <label for="aroma" class="form-label">Aroma</label>
+              <input type="text" class="form-control" id="aroma" name="aroma">
+            </div>
+            <div class="mb-3">
+              <label for="acidity" class="form-label">Acidity</label>
+              <input type="text" class="form-control" id="acidity" name="acidity">
+            </div>
+            <div class="mb-3">
+              <label for="brew_methods" class="form-label">Brew Methods</label>
+              <input type="text" class="form-control" id="brew_methods" name="brew_methods">
+            </div>
+            <div class="mb-3">
+              <label for="cupping_score" class="form-label">Cupping Score</label>
+              <input type="text" class="form-control" id="cupping_score" name="cupping_score">
+            </div>
+            <div class="mb-3">
+              <label for="certifications" class="form-label">Certifications</label>
+              <input type="text" class="form-control" id="certifications" name="certifications">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Save Bean</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
