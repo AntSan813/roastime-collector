@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-5">
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{{ url_for('beans_list') }}">Beans List</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{{ bean.name }}</li>
+    </ol>
+  </nav>
+
+  <div class="row">
+    <div class="col-md-4 mb-4">
+      {% if bean.image_url %}
+      <img src="{{ bean.image_url }}" class="img-fluid rounded" alt="{{ bean.name }}">
+      {% else %}
+      <div class="bg-light d-flex align-items-center justify-content-center" style="height: 250px;">
+        <i class="bi bi-seedling display-1 text-muted"></i>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="col-md-8">
+      <h1 class="mb-4">{{ bean.name }}</h1>
+      <table class="table table-bordered">
+        <tbody>
+          <tr>
+            <th scope="row">Bean ID</th>
+            <td>{{ bean.id }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Origin</th>
+            <td>{{ bean.origin }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Region</th>
+            <td>{{ bean.region }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Varietal</th>
+            <td>{{ bean.varietal }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Processing Method</th>
+            <td>{{ bean.processing_method }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Altitude</th>
+            <td>{{ bean.altitude }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Taste Notes</th>
+            <td>{{ bean.taste_notes }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Aroma</th>
+            <td>{{ bean.aroma }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Acidity</th>
+            <td>{{ bean.acidity }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Brew Methods</th>
+            <td>{{ bean.brew_methods }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Cupping Score</th>
+            <td>{{ bean.cupping_score }}</td>
+          </tr>
+          <tr>
+            <th scope="row">Certifications</th>
+            <td>{{ bean.certifications }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- Action Buttons -->
+      <div class="mt-4">
+        <button class="btn btn-outline-secondary me-2" onclick="editBean('{{ bean.id }}')">
+          <i class="bi bi-pencil-square me-2"></i>Edit Bean
+        </button>
+        <button class="btn btn-outline-danger" onclick="deleteBean('{{ bean.id }}')">
+          <i class="bi bi-trash me-2"></i>Delete Bean
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% include 'components/bean_modal.html' %}
+
+<script>
+  const editBean = (beanId) => {
+    const beans = JSON.parse(document.getElementById('beans-data').textContent);
+    const selectedBean = beans.find(b => b.id === beanId);
+
+    if (selectedBean) {
+      document.getElementById('beanId').value = selectedBean.id;
+      document.getElementById('name').value = selectedBean.name;
+      document.getElementById('origin').value = selectedBean.origin;
+      document.getElementById('region').value = selectedBean.region;
+      document.getElementById('varietal').value = selectedBean.varietal;
+      document.getElementById('processing_method').value = selectedBean.processing_method;
+      document.getElementById('altitude').value = selectedBean.altitude;
+      document.getElementById('taste_notes').value = selectedBean.taste_notes;
+      document.getElementById('aroma').value = selectedBean.aroma;
+      document.getElementById('acidity').value = selectedBean.acidity;
+      document.getElementById('brew_methods').value = selectedBean.brew_methods;
+      document.getElementById('cupping_score').value = selectedBean.cupping_score;
+      document.getElementById('certifications').value = selectedBean.certifications;
+
+      document.getElementById('addBeanModalLabel').textContent = 'Edit Bean';
+      addBeanModal.show();
+    }
+  }
+
+  const deleteBean = (beanId) => {
+    if (confirm('Are you sure you want to delete this bean?')) {
+      fetch(`/delete_bean/${beanId}`, {
+        method: 'DELETE'
+      }).then(response => {
+        if (response.ok) {
+          // remove bean card from dom if possible; else reload the page
+          const beanCard = document.getElementById(`bean-${beanId}`);
+          if (beanCard) {
+            beanCard.remove();
+          } else {
+            location.reload();
+          }
+        } else {
+          alert('Failed to delete bean.');
+        }
+      });
+    }
+  }
+</script>
+{% endblock %}
