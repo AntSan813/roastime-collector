@@ -1,40 +1,45 @@
-<div class="col-md-6 col-lg-4 mb-4 d-flex align-items-stretch" id="roast-{{ roast.uid }}">
+<div class="col-md-6 col-lg-4 mb-4 align-items-stretch" id="roast-{{ roast.uid }}">
   <div class="card h-100 w-100 shadow-sm border-0">
     <div class="card-body d-flex flex-column" data-roast-id="{{ roast.uid }}" data-bean-id="{{ roast.beanId }}">
       <h5 class="card-title text-primary">{{ roast.roastName }}</h5>
 
       {% if bean %}
-      <p class="card-text"><a href="{{ url_for('beans_list') }}">{{ bean.name }}</a></p>
+      <p class="card-text mb-2"><strong>Bean:</strong> <a href="{{ url_for('beans_list') }}"
+          class="text-decoration-none">{{ bean.name }}</a></p>
       {% endif %}
 
-      <p class="card-text text-muted mb-1"><i class="bi bi-calendar-event"></i> {{ roast.dateTime | datetime }}</p>
-      <p class="card-text mb-1"><strong>Total Roast Time:</strong> {{ roast.roast_length }} minutes</p>
-      <p class="card-text mb-1"><strong>Weight Green:</strong> {{ roast.weight_green }} oz</p>
-      <p class="card-text mb-1"><strong>Weight Roasted:</strong> {{ roast.weight_roasted }} oz</p>
-      <p class="card-text mb-3"><strong>Preheat Temperature:</strong> {{ roast.preheatTemperature }} °C</p>
+      <ul class="list-group list-group-flush mb-3">
+        <li class="list-group-item p-1"><i class="bi bi-calendar-event me-2"></i>{{ roast.dateTime | datetime }}</li>
+        <li class="list-group-item p-1"><strong>Total Roast Time:</strong> {{ roast.roast_length }} minutes</li>
+        <li class="list-group-item p-1"><strong>Weight Green:</strong> {{ roast.weight_green }} oz</li>
+        <li class="list-group-item p-1"><strong>Weight Roasted:</strong> {{ roast.weight_roasted }} oz</li>
+        <li class="list-group-item p-1"><strong>Preheat Temperature:</strong> {{ roast.preheatTemperature }} °C</li>
+      </ul>
 
-      {% if bean %}
-
-      {% if not roast.is_processed %}
-      <button class="btn btn-warning mt-auto" onclick="processRoast(this, '{{ roast.uid }}')">Process Roast</button>
-
-      {% else %}
-      <div class="btn-group mt-auto" role="group" aria-label="Basic example">
-        <a href="{{ roast.profile_link }}" class="btn btn-success flex-grow-1">View Profile</a>
-        <button class="btn btn-secondary flex-grow-0" onclick="processRoast(this, '{{ roast.uid }}')">
-          <i class="bi bi-arrow-clockwise"></i>
+      <div class="mt-auto">
+        {% if bean %}
+        {% if not roast.is_processed %}
+        <button class="btn btn-warning w-100 mb-2" onclick="processRoast(this, '{{ roast.uid }}')">
+          <i class="bi bi-gear-fill me-2"></i>Process Roast
         </button>
+        {% else %}
+        <a href="{{ roast.profile_link }}" class="btn btn-success w-100 mb-2">
+          <i class="bi bi-eye-fill me-2"></i>View Profile
+        </a>
+        <button class="btn btn-outline-secondary w-100" onclick="processRoast(this, '{{ roast.uid }}')">
+          <i class="bi bi-arrow-clockwise me-2"></i>Reprocess Roast
+        </button>
+        <p class="card-text text-muted mt-2 text-center"><small>Last Processed: {{ roast.last_processed | datetime
+            }}</small></p>
+        {% endif %}
+        {% else %}
+        {% if roast.beanId %}
+        <button class="btn btn-primary w-100 mt-auto" onclick="openRegisterBeanModal('{{ roast.beanId }}')">
+          <i class="bi bi-plus-circle me-2"></i>Register Bean
+        </button>
+        {% endif %}
+        {% endif %}
       </div>
-      <p class="card-text text-muted mt-2"><small>Last Processed: {{ roast.last_processed | datetime }}</small></p>
-      {% endif %}
-
-      {% else %}
-      {% if roast.beanId %}
-      <button class="btn btn-primary mt-auto" onclick="openRegisterBeanModal('{{ roast.beanId }}')">Register
-        Bean</button>
-      {% endif%}
-
-      {% endif %}
     </div>
   </div>
 </div>

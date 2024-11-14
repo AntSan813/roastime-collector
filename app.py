@@ -11,7 +11,9 @@ from scripts.utils import (
     get_roast_path,
     bean_from_form,
     save_processed_roast,
-    load_beans,
+    get_beans,
+    get_roast,
+    get_bean,
     save_beans,
     get_all_roasts,
 )
@@ -51,7 +53,7 @@ def datetime_filter(unix_timestamp):
 
 @app.route("/")
 def index():
-    beans = load_beans()
+    beans = get_beans()
     roasts = get_all_roasts()
     roasts.sort(key=lambda x: x["dateTime"], reverse=True)
     return render_template("pages/roasts.html", roasts=roasts, beans=beans)
@@ -73,23 +75,27 @@ def generate_roast_profile_route(roast_id):
 
 @app.route("/roast_card/<roast_id>")
 def roast_card(roast_id):
-    beans = load_beans()
-    roasts = get_all_roasts()
-    roast = next((r for r in roasts if r["id"] == roast_id), None)
-    bean = next((b for b in beans if b["id"] == roast["beanId"]), None)
+    roast = get_roast(roast_id)
+    bean = get_bean(roast["beanId"])
     return render_template("components/roast_card.html", roast=roast, bean=bean)
 
 
 @app.route("/beans")
 def beans_list():
-    beans = load_beans()
-    return render_template("pages/beans.html", beans=beans)  # bean_id=bean_id)
+    beans = get_beans()
+    return render_template("pages/beans.html", beans=beans)
+
+
+@app.route("/bean/<bean_id>")
+def bean_detail(bean_id):
+    bean = get_bean(bean_id)
+    return render_template("pages/bean.html", bean=bean)
 
 
 @app.route("/add_bean", methods=["POST"])
 def add_bean():
     new_bean = bean_from_form(request.form)
-    beans = load_beans()
+    beans = get_beans()
     beans.append(new_bean)
     save_beans(beans)
     return jsonify({"message": "Bean added successfully", "bean": new_bean}), 200
@@ -97,8 +103,7 @@ def add_bean():
 
 @app.route("/edit_bean/<bean_id>", methods=["PUT"])
 def edit_bean(bean_id):
-    beans = load_beans()
-    bean = next((b for b in beans if b["id"] == bean_id), None)
+    bean = get_bean(bean_id)
     if bean:
         bean.update(bean_from_form(request.form))
         save_beans(beans)
@@ -109,7 +114,7 @@ def edit_bean(bean_id):
 
 @app.route("/delete_bean/<bean_id>", methods=["DELETE"])
 def delete_bean(bean_id):
-    beans = load_beans()
+    beans = get_beans()
     beans = [bean for bean in beans if bean["id"] != bean_id]
     save_beans(beans)
     return jsonify({"message": "Bean deleted successfully"}), 200
@@ -117,8 +122,7 @@ def delete_bean(bean_id):
 
 @app.route("/bean_card/<bean_id>")
 def bean_card(bean_id):
-    beans = load_beans()
-    bean = next((b for b in beans if b["id"] == bean_id), None)
+    bean = get_bean(bean_id)
     if bean:
         return render_template("components/bean_card.html", bean=bean)
     else:

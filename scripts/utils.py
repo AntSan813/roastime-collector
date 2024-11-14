@@ -30,9 +30,9 @@ def save_beans(beans):
 
 
 def save_processed_roast(roast):
-    roasts = load_processed_roasts()
+    roasts = get_processed_roasts()
     # Check if roast already exists and override it if it does
-    existing_roast = next((r for r in roasts if r["id"] == roast["id"]), None)
+    existing_roast = get_roast(roast.id)
     if existing_roast:
         roasts.remove(existing_roast)
         roasts.append(roast)
@@ -79,7 +79,7 @@ def bean_from_form(form):
     }
 
 
-def load_beans():
+def get_beans():
     if os.path.exists(BEANS_FILE):
         with open(BEANS_FILE, "r") as f:
             return json.load(f)
@@ -87,7 +87,7 @@ def load_beans():
         return []
 
 
-def load_processed_roasts():
+def get_processed_roasts():
     if os.path.exists(PROCESSED_ROASTS_FILE):
         with open(PROCESSED_ROASTS_FILE, "r") as f:
             return json.load(f)
@@ -96,7 +96,7 @@ def load_processed_roasts():
 
 
 def get_all_roasts():
-    processed_roasts = load_processed_roasts()
+    processed_roasts = get_processed_roasts()
     roast_path = get_roast_path()
     roast_files = [f for f in os.listdir(roast_path)]
 
@@ -132,6 +132,16 @@ def get_all_roasts():
     return roasts
 
 
+def get_bean(id):
+    beans = get_beans()
+    return next((b for b in beans if b["id"] == id), None)
+
+
+def get_roast(id):
+    roasts = get_all_roasts()
+    return next((r for r in roasts if r["id"] == id), None)
+
+
 # file system event handler for data directory
 class DataFileHandler(FileSystemEventHandler):
     def __init__(self, beans, processed_roasts):
@@ -141,7 +151,7 @@ class DataFileHandler(FileSystemEventHandler):
     def on_modified(self, event):
         if event.src_path == BEANS_FILE:
             self.beans.clear()
-            self.beans.extend(load_beans())
+            self.beans.extend(get_beans())
         elif event.src_path == PROCESSED_ROASTS_FILE:
             self.processed_roasts.clear()
-            self.processed_roasts.extend(load_processed_roasts())
+            self.processed_roasts.extend(get_processed_roasts())

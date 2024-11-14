@@ -2,7 +2,15 @@
 
 {% block content %}
 <div class="container my-4">
-  <h1 class="text-center mb-5">Beans List</h1>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Beans List</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <input type="text" class="form-control w-25" id="searchInput" placeholder="Search beans..."
+        onkeyup="searchBeans()">
+    </div>
+  </div>
+
+
   <div class="row" id="bean-cards-container">
     {% for bean in beans %}
     {% include 'components/bean_card.html' %}
@@ -20,7 +28,23 @@
 <script>
   var addBeanModal = new bootstrap.Modal(document.getElementById('addBeanModal'));
 
-  document.addEventListener('DOMContentLoaded', function () {
+  const searchBeans = () => {
+    const input = document.getElementById('searchInput').value.toLowerCase();
+    const beanCards = document.querySelectorAll('#bean-cards-container .col-md-6');
+    let anyVisible = false;
+    beanCards.forEach(card => {
+      const beanName = card.querySelector('.card-title').textContent.toLowerCase();
+      if (beanName.includes(input)) {
+        card.style.display = '';
+        anyVisible = true;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+    document.getElementById('no-results').style.display = anyVisible ? 'none' : 'block';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     const beanId = urlParams.get('bean_id');
     const openModal = urlParams.get('open_modal');
@@ -37,7 +61,7 @@
     }
   });
 
-  function updateBeanCard(beanId) {
+  const updateBeanCard = (beanId) => {
     fetch(`/bean_card/${beanId}`)
       .then(response => {
         if (response.ok) {
@@ -58,7 +82,7 @@
       });
   }
 
-  function editBean(beanId) {
+  const editBean = (beanId) => {
     const beans = JSON.parse(document.getElementById('beans-data').textContent);
     const selectedBean = beans.find(b => b.id === beanId);
 
@@ -82,7 +106,7 @@
     }
   }
 
-  function deleteBean(beanId) {
+  const deleteBean = (beanId) => {
     if (confirm('Are you sure you want to delete this bean?')) {
       fetch(`/delete_bean/${beanId}`, {
         method: 'DELETE'
@@ -102,7 +126,7 @@
     }
   }
 
-  document.getElementById('beanForm').addEventListener('submit', function (event) {
+  document.getElementById('beanForm').addEventListener('submit', (event) => {
     event.preventDefault();
     const formData = new FormData(this);
     const beanId = document.getElementById('beanId').value;

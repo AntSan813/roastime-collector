@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from .s3 import upload_to_s3
 from .roast_data import extract_roast_data
 from .html_template import generate_qr_code, generate_webpage
-from .utils import load_beans
+from .utils import get_beans
 
 
 logging.basicConfig(
@@ -54,7 +54,7 @@ def generate_roast_profile(file_path, roast_id):
 
     # get bean metadata
     bean_id = roast_data_json.get("beanId")
-    beans = load_beans()
+    beans = get_beans()
     # bean_metadata = get_bean_info(bean_id, beans_metadata)
     bean = [bean for bean in beans if bean["id"] == bean_id][0]
 
