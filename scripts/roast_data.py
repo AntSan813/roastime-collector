@@ -59,6 +59,11 @@ def extract_roast_data(data_json):
 
     weight_green = data_json.get("weightGreen", 0)
     weight_roasted = data_json.get("weightRoasted", 0)
+    if weight_green == 0:
+        raise ZeroDivisionError(
+            "weightGreen is zero, cannot calculate weight loss percentage"
+        )
+
     weight_loss_percentage = ((weight_green - weight_roasted) / weight_green) * 100
 
     return {

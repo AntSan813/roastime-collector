@@ -31,13 +31,8 @@ def save_beans(beans):
 
 def save_processed_roast(roast):
     roasts = get_processed_roasts()
-    # Check if roast already exists and override it if it does
-    existing_roast = get_roast(roast.id)
-    if existing_roast:
-        roasts.remove(existing_roast)
-        roasts.append(roast)
-    else:
-        roasts.append(roast)
+    roasts = [r for r in roasts if r["id"] != roast["id"]]
+    roasts.append(roast)
     with open(PROCESSED_ROASTS_FILE, "w") as f:
         json.dump(roasts, f, indent=4)
 
@@ -82,7 +77,10 @@ def bean_from_form(form):
 def get_beans():
     if os.path.exists(BEANS_FILE):
         with open(BEANS_FILE, "r") as f:
-            return json.load(f)
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return []
     else:
         return []
 

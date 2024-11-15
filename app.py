@@ -89,7 +89,8 @@ def beans_list():
 @app.route("/bean/<bean_id>")
 def bean_detail(bean_id):
     bean = get_bean(bean_id)
-    return render_template("pages/bean.html", bean=bean)
+    beans = get_beans()
+    return render_template("pages/bean.html", bean=bean, beans=beans)
 
 
 @app.route("/add_bean", methods=["POST"])
@@ -103,9 +104,12 @@ def add_bean():
 
 @app.route("/edit_bean/<bean_id>", methods=["PUT"])
 def edit_bean(bean_id):
-    bean = get_bean(bean_id)
+    beans = get_beans()
+    bean = next((b for b in beans if b["id"] == bean_id), None)
     if bean:
-        bean.update(bean_from_form(request.form))
+        updated_bean = bean_from_form(request.form)
+        for key, value in updated_bean.items():
+            bean[key] = value
         save_beans(beans)
         return jsonify({"message": "Bean updated successfully", "bean": bean}), 200
     else:
@@ -125,6 +129,16 @@ def bean_card(bean_id):
     bean = get_bean(bean_id)
     if bean:
         return render_template("components/bean_card.html", bean=bean)
+    else:
+        return "Bean not found", 404
+
+
+@app.route("/bean_details/<bean_id>")
+def bean_details(bean_id):
+    bean = get_bean(bean_id)
+    print(bean)
+    if bean:
+        return render_template("components/bean_details.html", bean=bean)
     else:
         return "Bean not found", 404
 

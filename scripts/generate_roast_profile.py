@@ -37,11 +37,20 @@ def copy_and_overwrite(from_path, to_path):
 def generate_roast_profile(file_path, roast_id):
     base_url = os.getenv("S3_BASE_URL")
     bucket_name = os.getenv("S3_BUCKET_NAME")
-    logging.info(f"Processing roast file: {file_path}")
+    logging.info(f"Processing roast file: {file_path}/{roast_id}")
+
+    # Load the roast data
+    roast_file_path = os.path.join(file_path, roast_id)
+    if roast_file_path.endswith(".DS_Store"):
+        return
 
     # first, load the roast data
-    with open(f"{file_path}/{roast_id}", "r", encoding="utf-8") as f:
-        roast_data_json = json.load(f)
+    try:
+        with open(roast_file_path, "r", encoding="utf-8") as f:
+            roast_data_json = json.load(f)
+    except (UnicodeDecodeError, json.JSONDecodeError) as e:
+        logging.error(f"Error reading file {roast_file_path}: {e}")
+        return
 
     # define local directories
     roast_directory = f"roasts/{roast_id}"
@@ -77,9 +86,9 @@ def generate_roast_profile(file_path, roast_id):
     assets_directory_local = os.path.join(roast_directory_local, "assets")
     os.makedirs(assets_directory_local, exist_ok=True)
 
-    copy_and_overwrite("static/js", assets_directory_local)
-    copy_and_overwrite("static/css", assets_directory_local)
-    copy_and_overwrite("static/images", assets_directory_local)
+    copy_and_overwrite("roast_profile_template/static/js", assets_directory_local)
+    copy_and_overwrite("roast_profile_template/static/css", assets_directory_local)
+    copy_and_overwrite("roast_profile_template/static/images", assets_directory_local)
 
     logging.info(f"Webpage saved as {webpage_local_path}")
 

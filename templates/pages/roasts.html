@@ -24,106 +24,80 @@
 
 {% include 'components/bean_modal.html' %}
 
+<script id="beans-data" type="application/json">
+  {{ beans | tojson }}
+</script>
 <script>
-  var addBeanModal = new bootstrap.Modal(document.getElementById('addBeanModal'));
+  var beanFormModal = new bootstrap.Modal(
+    document.getElementById("beanFormModal")
+  )
 
-  const searchRoasts = () => {
-    const input = document.getElementById('searchInput').value.toLowerCase();
-    const roastCards = document.querySelectorAll('#roast-cards-container .col-md-6');
-    let anyVisible = false;
+  function searchRoasts() {
+    const input = document.getElementById("searchInput").value.toLowerCase()
+    const roastCards = document.querySelectorAll("#roast-cards-container .col-md-6")
+    let anyVisible = false
 
     roastCards.forEach(card => {
-      const roastName = card.querySelector('.card-title').textContent.toLowerCase();
+      const roastName = card.querySelector(".card-title").textContent.toLowerCase()
       if (roastName.includes(input)) {
-        card.style.display = '';
-        anyVisible = true;
+        card.style.display = ""
+        anyVisible = true
       } else {
-        card.style.display = 'none';
+        card.style.display = "none"
       }
-    });
+    })
 
-    document.getElementById('no-results').style.display = anyVisible ? 'none' : 'block';
+    document.getElementById("no-results").style.display = anyVisible
+      ? "none"
+      : "block"
   }
 
-  const processRoast = (button, roastId) => {
-    button.disabled = true;
-    const originalHTML = button.innerHTML;
-    button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-
-    fetch(`/process/${roastId}`, {
-      method: 'POST'
-    }).then(response => {
-      if (response.ok) {
-        return fetch(`/roast_card/${roastId}`);
-      } else {
-        throw new Error('Failed to process roast.');
-      }
-    }).then(response => {
-      if (response.ok) {
-        return response.text();
-      } else {
-        throw new Error('Failed to load updated roast card.');
-      }
-    }).then(html => {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      const newRoastCard = doc.body.firstElementChild;
-
-      const oldRoastCard = document.getElementById(`roast-${roastId}`);
-      if (oldRoastCard && newRoastCard) {
-        oldRoastCard.replaceWith(newRoastCard);
-      }
-    }).catch(error => {
-      button.disabled = false;
-      button.innerHTML = originalHTML;
-      alert(error.message);
-    });
-  }
-
-  const updateRoastCardsWithNewBean = (bean) => {
-    const roastCards = document.querySelectorAll(`[data-roast-id][data-bean-id="${bean.id}"]`);
+  function updateRoastCardsWithNewBean(bean) {
+    const roastCards = document.querySelectorAll(
+      `[data-roast-id][data-bean-id="${bean.id}"]`
+    )
     roastCards.forEach(roastCardElement => {
-      const roastId = roastCardElement.getAttribute('data-roast-id');
+      const roastId = roastCardElement.getAttribute("data-roast-id")
       fetch(`/roast_card/${roastId}`)
         .then(response => {
           if (response.ok) {
-            return response.text();
+            return response.text()
           } else {
-            throw new Error('Failed to load updated roast card.');
+            throw new Error("Failed to load updated roast card.")
           }
         })
         .then(html => {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(html, 'text/html');
-          const newRoastCard = doc.body.firstElementChild;
+          const parser = new DOMParser()
+          const doc = parser.parseFromString(html, "text/html")
+          const newRoastCard = doc.body.firstElementChild
 
-          const oldRoastCard = document.getElementById(`roast-${roastId}`);
+          const oldRoastCard = document.getElementById(`roast-${roastId}`)
           if (oldRoastCard && newRoastCard) {
-            oldRoastCard.replaceWith(newRoastCard);
+            oldRoastCard.replaceWith(newRoastCard)
           }
-        });
-    });
+        })
+    })
   }
 
-  const openRegisterBeanModal = (beanId) => {
-    document.getElementById('beanId').value = beanId;
-    addBeanModal.show();
-  }
+  document
+    .getElementById("beanForm")
+    .addEventListener("submit", function (event) {
+      event.preventDefault()
+      const formData = new FormData(this)
+      fetch("/add_bean", {
+        method: "POST",
+        body: formData,
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.message === "Bean added successfully") {
+            beanFormModal.hide()
+            updateRoastCardsWithNewBean(data.bean)
+          } else {
+            alert("Failed to add bean.")
+          }
+        })
+    })
 
-  document.getElementById('beanForm').addEventListener('submit', function (event) {
-    event.preventDefault();
-    const formData = new FormData(this);
-    fetch('/add_bean', {
-      method: 'POST',
-      body: formData
-    }).then(response => response.json()).then(data => {
-      if (data.message === 'Bean added successfully') {
-        addBeanModal.hide();
-        updateRoastCardsWithNewBean(data.bean);
-      } else {
-        alert('Failed to add bean.');
-      }
-    });
-  });
 </script>
 {% endblock %}

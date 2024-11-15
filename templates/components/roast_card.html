@@ -4,7 +4,7 @@
       <h5 class="card-title text-primary">{{ roast.roastName }}</h5>
 
       {% if bean %}
-      <p class="card-text mb-2"><strong>Bean:</strong> <a href="{{ url_for('beans_list') }}"
+      <p class="card-text mb-2"><strong>Bean:</strong> <a href="{{ url_for('bean_detail', bean_id=bean.id) }}"
           class="text-decoration-none">{{ bean.name }}</a></p>
       {% endif %}
 
@@ -34,7 +34,7 @@
         {% endif %}
         {% else %}
         {% if roast.beanId %}
-        <button class="btn btn-primary w-100 mt-auto" onclick="openRegisterBeanModal('{{ roast.beanId }}')">
+        <button class="btn btn-primary w-100 mt-auto" onclick="openBeanFormModal('{{ roast.beanId }}')">
           <i class="bi bi-plus-circle me-2"></i>Register Bean
         </button>
         {% endif %}
@@ -43,3 +43,51 @@
     </div>
   </div>
 </div>
+
+
+<script>
+  function openBeanFormModal(beanId) {
+    document.getElementById("beanId").value = beanId
+    beanFormModal.show()
+  }
+
+  function processRoast(button, roastId) {
+    button.disabled = true
+    const originalHTML = button.innerHTML
+    button.innerHTML =
+      '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>'
+
+    fetch(`/process/${roastId}`, {
+      method: "POST",
+    })
+      .then(response => {
+        if (response.ok) {
+          return fetch(`/roast_card/${roastId}`)
+        } else {
+          throw new Error("Failed to process roast.")
+        }
+      })
+      .then(response => {
+        if (response.ok) {
+          return response.text()
+        } else {
+          throw new Error("Failed to load updated roast card.")
+        }
+      })
+      .then(html => {
+        const parser = new DOMParser()
+        const doc = parser.parseFromString(html, "text/html")
+        const newRoastCard = doc.body.firstElementChild
+
+        const oldRoastCard = document.getElementById(`roast-${roastId}`)
+        if (oldRoastCard && newRoastCard) {
+          oldRoastCard.replaceWith(newRoastCard)
+        }
+      })
+      .catch(error => {
+        button.disabled = false
+        button.innerHTML = originalHTML
+        alert(error.message)
+      })
+  }
+</script>
