@@ -59,7 +59,9 @@ def index():
     beans = get_beans()
     roasts = get_roasts()
     roasts.sort(key=lambda x: x["dateTime"], reverse=True)
-    return render_template("pages/roasts.html", roasts=roasts, beans=beans)
+    return render_template(
+        "pages/roasts.html", roasts=roasts, beans=beans, current_page="index"
+    )
 
 
 @app.route("/process/<roast_id>", methods=["POST"])
@@ -103,7 +105,7 @@ def roast_card(roast_id):
 @app.route("/beans")
 def beans_list():
     beans = get_beans()
-    return render_template("pages/beans.html", beans=beans)
+    return render_template("pages/beans.html", beans=beans, current_page="beans_list")
 
 
 @app.route("/bean/<bean_id>")
@@ -194,11 +196,15 @@ def settings():
         with open(os.path.join(DATA_DIR, "config.json"), "w") as f:
             json.dump(config, f)
 
-        return render_template("pages/settings.html", config=config)
+        return render_template(
+            "pages/settings.html", config=config, current_page="settings"
+        )
 
     else:
         config = get_config()
-        return render_template("pages/settings.html", config=config)
+        return render_template(
+            "pages/settings.html", config=config, current_page="settings"
+        )
 
 
 if __name__ == "__main__":
