@@ -1,35 +1,40 @@
 import os
+import json
 import logging
-from dotenv import load_dotenv
 from watchdog.observers import Observer
-from flask import Flask, render_template, request, jsonify
+from flask import (
+    Flask,
+    request,
+    jsonify,
+    send_file,
+    render_template,
+    send_from_directory,
+)
 from datetime import datetime
 
 from scripts.generate_roast_profile import generate_roast_profile
 from scripts.utils import (
-    DataFileHandler,
-    get_roast_path,
-    bean_from_form,
-    save_processed_roast,
+    get_bean,
     get_beans,
     get_roast,
-    get_bean,
     save_beans,
-    get_all_roasts,
+    get_config,
+    get_roasts,
+    bean_from_form,
+    DataFileHandler,
+    save_processed_roast,
 )
 
 app = Flask(__name__)
 
 DATA_DIR = "data"
-BEANS_FILE = os.path.join(DATA_DIR, "beans.json")
-PROCESSED_ROASTS_FILE = os.path.join(DATA_DIR, "processed_roasts.json")
 
 os.makedirs(DATA_DIR, exist_ok=True)
 
 beans = []
-processed_roasts = []
+roast_profiles = []
 
-data_event_handler = DataFileHandler(beans, processed_roasts)
+data_event_handler = DataFileHandler(beans, roast_profiles)
 observer = Observer()
 observer.schedule(data_event_handler, path=DATA_DIR, recursive=False)
 observer.start()
@@ -37,8 +42,6 @@ observer.start()
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
-load_dotenv()
 
 
 @app.template_filter("datetime")
@@ -54,23 +57,40 @@ def datetime_filter(unix_timestamp):
 @app.route("/")
 def index():
     beans = get_beans()
-    roasts = get_all_roasts()
+    roasts = get_roasts()
     roasts.sort(key=lambda x: x["dateTime"], reverse=True)
     return render_template("pages/roasts.html", roasts=roasts, beans=beans)
 
 
 @app.route("/process/<roast_id>", methods=["POST"])
 def generate_roast_profile_route(roast_id):
-    roast_path = get_roast_path()
-    url = generate_roast_profile(roast_path, roast_id)
-    last_processed = datetime.now().timestamp() * 1000
-    processed_roast = {
-        "id": roast_id,
-        "profile_link": url,
-        "last_processed": last_processed,
-    }
-    save_processed_roast(processed_roast)
-    return jsonify({"profile_link": url, "last_processed": last_processed}), 200
+    try:
+        url = generate_roast_profile(roast_id)
+        last_processed = datetime.now().timestamp() * 1000
+        processed_roast = {
+            "id": roast_id,
+            "profile_link": url,
+            "last_processed": last_processed,
+        }
+        save_processed_roast(processed_roast)
+        return jsonify({"profile_link": url, "last_processed": last_processed}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/download_qr/<roast_id>")
+def download_qr(roast_id):
+    qr_code_path = f"cache/qr_codes/{roast_id}_qr.png"
+    if os.path.exists(qr_code_path):
+        return send_file(qr_code_path, as_attachment=True)
+    else:
+        return "QR code not found.", 404
+
+
+@app.route("/data/<path:filename>")
+def data_files(filename):
+    return send_from_directory("data", filename)
 
 
 @app.route("/roast_card/<roast_id>")
@@ -96,6 +116,13 @@ def bean_detail(bean_id):
 @app.route("/add_bean", methods=["POST"])
 def add_bean():
     new_bean = bean_from_form(request.form)
+    image_file = request.files.get("image_file")
+    if image_file:
+        image_filename = f"{new_bean['id']}_{image_file.filename}"
+        image_path = os.path.join("data", "bean_images", image_filename)
+        os.makedirs(os.path.dirname(image_path), exist_ok=True)
+        image_file.save(image_path)
+        new_bean["image_url"] = f"/{image_path}"
     beans = get_beans()
     beans.append(new_bean)
     save_beans(beans)
@@ -110,6 +137,13 @@ def edit_bean(bean_id):
         updated_bean = bean_from_form(request.form)
         for key, value in updated_bean.items():
             bean[key] = value
+        image_file = request.files.get("image_file")
+        if image_file:
+            image_filename = f"{bean_id}_{image_file.filename}"
+            image_path = os.path.join("data", "bean_images", image_filename)
+            os.makedirs(os.path.dirname(image_path), exist_ok=True)
+            image_file.save(image_path)
+            bean["image_url"] = f"/{image_path}"
         save_beans(beans)
         return jsonify({"message": "Bean updated successfully", "bean": bean}), 200
     else:
@@ -136,11 +170,35 @@ def bean_card(bean_id):
 @app.route("/bean_details/<bean_id>")
 def bean_details(bean_id):
     bean = get_bean(bean_id)
-    print(bean)
     if bean:
         return render_template("components/bean_details.html", bean=bean)
     else:
         return "Bean not found", 404
+
+
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    config = get_config()
+    if request.method == "POST":
+        logo = request.files.get("logo")
+        config["footer_text"] = request.form.get("footer_text")
+        config["s3_base_url"] = request.form.get("s3_base_url")
+        config["s3_bucket_name"] = request.form.get("s3_bucket_name")
+        config["s3_access_key"] = request.form.get("s3_access_key")
+        config["s3_secret_key"] = request.form.get("s3_secret_key")
+        if logo:
+            logo_path = os.path.join("data", "logo.png")
+            logo.save(logo_path)
+            config["logo_path"] = logo_path
+
+        with open(os.path.join(DATA_DIR, "config.json"), "w") as f:
+            json.dump(config, f)
+
+        return render_template("pages/settings.html", config=config)
+
+    else:
+        config = get_config()
+        return render_template("pages/settings.html", config=config)
 
 
 if __name__ == "__main__":

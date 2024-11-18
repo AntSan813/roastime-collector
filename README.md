@@ -1,60 +1,24 @@
-# RoastTime Roast Processor
+# Roast Profile Manager 
 
-System that transforms coffee roasting data from RoastTime into a customer-friendly webpage.
-
-demo: https://coffee-profiles.s3.amazonaws.com/roasts/f119LdNXSOSAut1ViLFwi/index.html
-
-### **Key Features**
-
-- **Automatically Detects New Roasts**
-- **Creates Customer-Friendly Web Pages**
-- **Publishes to the Web**
-- **Generates QR Codes**
-
-### **Web Page Template Features**
-
-- **Key Roast Details:**
-  - Displays important information like roast length, roast level, bean weights, and more.
-- **Bean Information:**
-  - Includes details about the coffee beans, such as their origin, altitude, varietal, etc.
-- **Interactive Roast Chart:**
-  - Shows a chart of the roasting process, similar to what you see in RoastTime, so customers can see how their coffee was roasted.
-- **Helpful Explanations:**
-  - Provides information on how to read the chart and understand the roasting process.
-
-### **Getting Started**
-
-#### **Prerequisites**
-- **RoastTime Software**
-  - Ensure you’re using RoastTime to record your coffee roasts.
-- **Bean Information Spreadsheet**
-  - Since the roast data only includes the ID of the bean, you’ll need to create a simple spreadsheet that matches the bean IDs to their names and other details.
-  - For a template, take a look at the `beans.csv` file. The bean ID can be found on Roast World.
-
-#### **Steps**
-
-1. **Prepare the bean data**
-   - Create a spreadsheet (`beans.csv`) that lists your beans, including their IDs, names, and any other information you’d like to share.
-   
-2. **Clone this repo**
-   
-4. **Customize it to your preferences**
-   - **HTML Templates:** Modify the `template/index.html` file to change the structure or content of the web page.
-   - **CSS Styles:** Update `template/assets/styles.css` to adjust styling to match your brand.
-   - **JavaScript:** Modify `template/assets/chart.js` for custom chart behavior if needed.
-
-5. **Configure AWS**
-   - This step is only necessary if you want to publish your roast profiles to Amazon’s S3 service. If you’d rather publish to another web service or don’t want to publish anywhere, then you will need to remove the relevant logic in the code.
-   - **Install and configure AWS CLI** by following the AWS documentation, and ensure the S3 configuration is set correctly in the project files.
-
-6. **Run it**
-   -  Before you roast, start main.py: `python main.py`
-   -  Or, test it with the following command: `python main.py --test sample_roast_data.json` 
-
-7. **Roast your coffee**
-   - Roast as you normally would using RoastTime. After each roast is completed, the program will generate a web page and a QR code for that roast.
-
-8. **Share the Roast Profile!**
-   - Once the roast is completed, you will see the script spit out its progress in the terminal. Once it finsihes, a new QR code will be added to the `qr_codes` directory. Print or share the QR code so customers can scan it. They’ll be taken to the web page with all the roast details and bean information.
+## Description
+This tool is designed to generate detailed roast profiles, providing insights and transparency about the coffee roasting process to your customers. While it also provides functionalities for managing coffee beans and roastery operations, its primary focus is on creating rich, informative roast profiles that enhance customer engagement and appreciation for your craft.
 
 
+## Goal/Inspiration
+This project was inspired by a passion for coffee and a desire to share that passion with others. It recognizes that, for some, understanding the journey from bean to cup enriches their coffee experience.
+
+The goal of this project is to bridge the gap between coffee roasters and their customers by fostering transparency and sharing knowledge about the art of coffee roasting. Many coffee enthusiasts are curious about the nuances that contribute to the flavor of their cup. By providing detailed information about the roasting process and the beans used, this program helps roasters educate and connect with their customers on a deeper level.
+
+
+## Features
+- **Detailed Roast Profile Generation**: Automatically create comprehensive roast profiles that can be shared with customers, showcasing temperature curves, flavor notes, and roast specifics.
+- **Bean Management**: Keep track of various coffee beans, including origin, processing methods, and tasting notes.
+- **Customer Engagement**: Enhance transparency and build trust by providing customers with insights into your roasting techniques and bean selection.
+
+
+## Roasteries Using This Software
+- [The Java Framework](thejavaframeworkroastery.com)
+
+
+## License
+This software is available for free to anyone interested in using it. All I ask is that if you use it for your business, let me know so I can add it to the *Roasteries Using This Software* section!

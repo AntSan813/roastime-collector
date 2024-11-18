@@ -1,49 +1,40 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container my-5">
-  <nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><a href="{{ url_for('beans_list') }}">Beans List</a></li>
-      <li class="breadcrumb-item active" aria-current="page">{{ bean.name }}</li>
-    </ol>
-  </nav>
+<div class="container my-4">
 
-  <div class="row">
-    <div class="col-md-4 mb-4">
-      {% if bean.image_url %}
-      <img src="{{ bean.image_url }}" class="img-fluid rounded" alt="{{ bean.name }}">
+  <!-- <div class="row"> -->
+  <!-- <div class="col-md-4 mb-4">
+      {% if bean.image_file %}
+      <img src="{{ bean.image_file }}" class="img-fluid rounded" alt="{{ bean.name }}">
       {% else %}
       <div class="bg-light d-flex align-items-center justify-content-center" style="height: 250px;">
         <i class="bi bi-seedling display-1 text-muted"></i>
       </div>
       {% endif %}
-    </div>
+    </div> -->
 
-    <div class="col-md-8">
-      {% include 'components/bean_details.html' %}
-      <div class="mt-4">
-        <button class="btn btn-outline-secondary me-2" onclick="openBeanFormModal('{{ bean.id }}')">
-          <i class="bi bi-pencil-square me-2"></i>Edit Bean
-        </button>
-        <button class="btn btn-outline-danger" onclick="deleteBean('{{ bean.id }}')">
-          <i class="bi bi-trash me-2"></i>Delete Bean
-        </button>
-      </div>
-    </div>
-  </div>
+  <!-- <div class="col-md-8"> -->
+
+  {% include 'components/bean_details.html' %}
+
+  <!-- </div>
+  </div> -->
 </div>
 
 </div>
 
 {% include 'components/bean_modal.html' %}
 
-<script id="beans-data" type="application/json">
-  {{ beans | tojson }}
-</script>
 
 <script>
-  function updateBeanInfo(beanId) {
+  var bean = {{ bean | tojson | safe }};
+  var beanId = "{{ bean.id }}";
+  var beanFormModal = new bootstrap.Modal(
+    document.getElementById("beanFormModal")
+  )
+
+  function updateBeanInfo() {
     fetch(`/bean_details/${beanId}`)
       .then(response => response.text())
       .then(html => {
@@ -51,38 +42,30 @@
         const doc = parser.parseFromString(html, "text/html");
         const newBeanDetails = doc.body.firstElementChild
         const oldBeanDetails = document.getElementById("bean-details");
-        console.log(oldBeanDetails, newBeanDetails);
         if (oldBeanDetails && newBeanDetails) {
           oldBeanDetails.replaceWith(newBeanDetails);
         }
       });
   }
 
-  var beanFormModal = new bootstrap.Modal(
-    document.getElementById("beanFormModal")
-  )
+  function openBeanFormModal() {
+    const fields = [
+      "id", "name", "origin", "region", "varietal", "processing_method",
+      "altitude", "taste_notes", "aroma", "acidity", "brew_methods",
+      "cupping_score", "certifications", "description", "purchase_url",
+      "image_file",
+    ];
 
-  function openBeanFormModal(beanId) {
-    const beans = JSON.parse(document.getElementById("beans-data").textContent)
-    const bean = beans.find(bean => bean.id === beanId)
-    document.getElementById("beanId").value = bean.id
-    document.getElementById("name").value = bean.name
-    document.getElementById("origin").value = bean.origin
-    document.getElementById("region").value = bean.region
-    document.getElementById("varietal").value = bean.varietal
-    document.getElementById("processing_method").value = bean.processing_method
-    document.getElementById("altitude").value = bean.altitude
-    document.getElementById("taste_notes").value = bean.taste_notes
-    document.getElementById("aroma").value = bean.aroma
-    document.getElementById("acidity").value = bean.acidity
-    document.getElementById("brew_methods").value = bean.brew_methods
-    document.getElementById("cupping_score").value = bean.cupping_score
-    document.getElementById("certifications").value = bean.certifications
-    document.getElementById("beanFormModalLabel").textContent = "Edit Bean"
-    beanFormModal.show()
+    console.log(bean)
+    fields.forEach(field => {
+      document.getElementById(field).value = bean[field] || "";
+    });
+
+    document.getElementById("beanFormModalLabel").textContent = "Edit Bean";
+    beanFormModal.show();
   }
 
-  function deleteBean(beanId) {
+  function deleteBean() {
     if (confirm("Are you sure you want to delete this bean?")) {
       fetch(`/delete_bean/${beanId}`, {
         method: "DELETE",
@@ -90,29 +73,37 @@
         if (response.ok) {
           window.location.href = "{{ url_for('beans_list') }}";
         } else {
-          alert("Failed to delete bean.")
+          toast("Error", "Failed to delete bean.")
         }
       })
     }
   }
 
-
-
-  document.getElementById("beanForm").addEventListener("submit", function (event) {
+  function editBean(event) {
     event.preventDefault();
-    const beanId = document.getElementById("beanId").value;
-    const url = `/edit_bean/${beanId}`;
-
-    fetch(url, {
+    console.log("Editing bean...", beanId);
+    fetch(`/edit_bean/${beanId}`, {
       method: "PUT",
       body: new FormData(this),
     })
-      .then(response => response.json())
+      .then(response => {
+        if (response.ok) {
+          return response.json()
+        }
+        throw new Error(response.error || response.message || "An error occurred while updating the bean.");
+      })
       .then(data => {
-        updateBeanInfo(beanId);
+        bean = { ...bean, ...data.bean };
+        toast("Success", "Bean updated successfully.");
         beanFormModal.hide();
-      });
-  });
+        updateBeanInfo();
+      })
+      .catch(error => {
+        toast("Error", error.message || "An error occurred while updating the bean.");
+      });;
+  }
+
+  document.getElementById("beanForm").addEventListener("submit", editBean);
 </script>
 
 {% endblock %}

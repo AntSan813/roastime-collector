@@ -1,7 +1,7 @@
 <div class="col-md-6 col-lg-4 mb-4 align-items-stretch" id="roast-{{ roast.uid }}">
-  <div class="card h-100 w-100 shadow-sm border-0">
+  <div class="card h-100 w-100 shadow-sm">
     <div class="card-body d-flex flex-column" data-roast-id="{{ roast.uid }}" data-bean-id="{{ roast.beanId }}">
-      <h5 class="card-title text-primary">{{ roast.roastName }}</h5>
+      <h5 class="card-title">{{ roast.roastName }}</h5>
 
       {% if bean %}
       <p class="card-text mb-2"><strong>Bean:</strong> <a href="{{ url_for('bean_detail', bean_id=bean.id) }}"
@@ -9,29 +9,35 @@
       {% endif %}
 
       <ul class="list-group list-group-flush mb-3">
-        <li class="list-group-item p-1"><i class="bi bi-calendar-event me-2"></i>{{ roast.dateTime | datetime }}</li>
-        <li class="list-group-item p-1"><strong>Total Roast Time:</strong> {{ roast.roast_length }} minutes</li>
+        <li class="list-group-item p-1"><i class="bi bi-calendar-event me-2"></i>{{
+          roast.dateTime | datetime }}
+        </li>
+        <li class="list-group-item p-1"><strong>Total Roast Time:</strong> {{ roast.roast_length }} min</li>
         <li class="list-group-item p-1"><strong>Weight Green:</strong> {{ roast.weight_green }} oz</li>
         <li class="list-group-item p-1"><strong>Weight Roasted:</strong> {{ roast.weight_roasted }} oz</li>
-        <li class="list-group-item p-1"><strong>Preheat Temperature:</strong> {{ roast.preheatTemperature }} °C</li>
       </ul>
 
       <div class="mt-auto">
         {% if bean %}
         {% if not roast.is_processed %}
         <button class="btn btn-warning w-100 mb-2" onclick="processRoast(this, '{{ roast.uid }}')">
-          <i class="bi bi-gear-fill me-2"></i>Process Roast
+          <i class="bi bi-gear-fill me-2"></i>Publish Roast Profile
         </button>
         {% else %}
-        <a href="{{ roast.profile_link }}" class="btn btn-success w-100 mb-2">
+        <a href="{{ roast.profile_link }}" class="btn btn-success w-100 mb-2" target="_blank">
           <i class="bi bi-eye-fill me-2"></i>View Profile
         </a>
+        <a href="/download_qr/{{ roast.uid }}" class="btn btn-secondary w-100 mb-2">
+          <i class="bi bi-qr-code me-2"></i>Download QR Code
+        </a>
         <button class="btn btn-outline-secondary w-100" onclick="processRoast(this, '{{ roast.uid }}')">
-          <i class="bi bi-arrow-clockwise me-2"></i>Reprocess Roast
+          <i class="bi bi-arrow-clockwise me-2"></i>Republish Roast Profile
         </button>
-        <p class="card-text text-muted mt-2 text-center"><small>Last Processed: {{ roast.last_processed | datetime
-            }}</small></p>
+        <p class="card-text text-muted mt-2 text-center">
+          <small>Last Published: {{ roast.last_processed | datetime }}</small>
+        </p>
         {% endif %}
+
         {% else %}
         {% if roast.beanId %}
         <button class="btn btn-primary w-100 mt-auto" onclick="openBeanFormModal('{{ roast.beanId }}')">
@@ -61,33 +67,37 @@
       method: "POST",
     })
       .then(response => {
+        console.log(response)
         if (response.ok) {
           return fetch(`/roast_card/${roastId}`)
-        } else {
-          throw new Error("Failed to process roast.")
         }
+        return response.json().then(error => {
+          throw new Error(error.message || error.error || "Failed to process roast.");
+        });
       })
       .then(response => {
         if (response.ok) {
           return response.text()
-        } else {
-          throw new Error("Failed to load updated roast card.")
         }
+        throw new Error("Failed to load updated roast card.");
       })
       .then(html => {
+        toast("Success", "Roast processed successfully.");
         const parser = new DOMParser()
         const doc = parser.parseFromString(html, "text/html")
         const newRoastCard = doc.body.firstElementChild
-
         const oldRoastCard = document.getElementById(`roast-${roastId}`)
         if (oldRoastCard && newRoastCard) {
           oldRoastCard.replaceWith(newRoastCard)
+        } else {
+          location.reload()
         }
       })
       .catch(error => {
         button.disabled = false
         button.innerHTML = originalHTML
-        alert(error.message)
+        toast("Error", `Failed to process roast: ${error.message}`);
+        console.error(error)
       })
   }
 </script>

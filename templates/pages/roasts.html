@@ -79,25 +79,36 @@
     })
   }
 
-  document
-    .getElementById("beanForm")
-    .addEventListener("submit", function (event) {
-      event.preventDefault()
-      const formData = new FormData(this)
-      fetch("/add_bean", {
-        method: "POST",
-        body: formData,
-      })
-        .then(response => response.json())
-        .then(data => {
-          if (data.message === "Bean added successfully") {
-            beanFormModal.hide()
-            updateRoastCardsWithNewBean(data.bean)
-          } else {
-            alert("Failed to add bean.")
-          }
-        })
+  const beanForm = document.getElementById("beanForm")
+  beanForm.addEventListener("submit", function (event) {
+    event.preventDefault()
+    const submitButton = this.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    const originalButtonText = submitButton.innerHTML;
+    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+    fetch("/add_bean", {
+      method: "POST",
+      body: new FormData(this),
     })
+      .then(response => response.json())
+      .then(data => {
+        beanForm.reset();
+        beanFormModal.hide();
+        toast("Success", "Bean added successfully.");
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+        updateRoastCardsWithNewBean(data.bean);
+      })
+      .catch(error => {
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+        toast("Error", "An error occurred while adding the bean.");
+      });
+  })
+
+  beanFormModal.addEventListener('hidden.bs.modal', function () {
+    beanForm.reset();
+  });
 
 </script>
 {% endblock %}

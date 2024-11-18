@@ -2,22 +2,37 @@ import shutil
 import logging
 import json
 import os
-from dotenv import load_dotenv
+import boto3
+from botocore.exceptions import ClientError
 
-from .s3 import upload_to_s3
 from .roast_data import extract_roast_data
 from .html_template import generate_qr_code, generate_webpage
-from .utils import get_beans
+from .utils import get_beans, get_config, get_roast_path
 
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-load_dotenv()
 
 CACHE_DIR = "cache"
 os.makedirs(CACHE_DIR, exist_ok=True)
+
+
+def upload_to_s3(s3_client, local_file_path, bucket_name, s3_key, content_type):
+    logging.info(f"Uploading {local_file_path} to s3://{bucket_name}/{s3_key}...")
+    try:
+        s3_client.upload_file(
+            local_file_path,
+            bucket_name,
+            s3_key,
+            ExtraArgs={"ContentType": content_type},
+        )
+        logging.info(f"Uploaded {local_file_path} to s3://{bucket_name}/{s3_key}")
+        return True
+    except ClientError as e:
+        logging.error(f"Failed to upload {local_file_path} to S3: {e}")
+        raise e
 
 
 def copy_and_overwrite(from_path, to_path):
@@ -34,17 +49,29 @@ def copy_and_overwrite(from_path, to_path):
             shutil.copy2(source, destination)
 
 
-def generate_roast_profile(file_path, roast_id):
-    base_url = os.getenv("S3_BASE_URL")
-    bucket_name = os.getenv("S3_BUCKET_NAME")
-    logging.info(f"Processing roast file: {file_path}/{roast_id}")
+def generate_roast_profile(roast_id):
+    roast_path = get_roast_path()
+    config = get_config()
 
-    # Load the roast data
-    roast_file_path = os.path.join(file_path, roast_id)
+    base_url = config.get("s3_base_url")
+    bucket_name = config.get("s3_bucket_name")
+    s3_access_key = config.get("s3_access_key")
+    s3_secret_key = config.get("s3_secret_key")
+
+    logging.info(f"Processing roast file: {roast_path}/{roast_id}")
+
+    s3_client = boto3.client(
+        "s3",
+        aws_access_key_id=s3_access_key,
+        aws_secret_access_key=s3_secret_key,
+    )
+
+    # Load the roast data from roast-time
+    roast_file_path = os.path.join(roast_path, roast_id)
     if roast_file_path.endswith(".DS_Store"):
         return
 
-    # first, load the roast data
+    # load the roast data
     try:
         with open(roast_file_path, "r", encoding="utf-8") as f:
             roast_data_json = json.load(f)
@@ -61,10 +88,9 @@ def generate_roast_profile(file_path, roast_id):
     # local file paths
     webpage_local_path = os.path.join(roast_directory_local, "index.html")
 
-    # get bean metadata
+    # get bean data
     bean_id = roast_data_json.get("beanId")
     beans = get_beans()
-    # bean_metadata = get_bean_info(bean_id, beans_metadata)
     bean = [bean for bean in beans if bean["id"] == bean_id][0]
 
     if not bean:
@@ -72,7 +98,27 @@ def generate_roast_profile(file_path, roast_id):
         return
 
     roast_data = extract_roast_data(roast_data_json)
-    merged_data = {**roast_data, **bean}
+    merged_data = {**roast_data, **bean, **config}
+
+    # upload files to s3
+    webpage_s3_key = f"{roast_directory}/index.html"
+
+    if "logo_path" in config and config["logo_path"]:
+        logo_local_path = config["logo_path"]
+        logo_filename = os.path.basename(logo_local_path)
+        logo_s3_key = f"{roast_directory}/assets/{logo_filename}"
+        upload_to_s3(
+            s3_client,
+            logo_local_path,
+            bucket_name,
+            logo_s3_key,
+            "image/png",  # Adjust MIME type if necessary
+        )
+        # Set the logo URL for the template
+        merged_data["logo_url"] = f"{base_url}{logo_s3_key}"
+    else:
+        # Use default logo
+        merged_data["logo_url"] = f"{base_url}{assets_directory}/logo.png"
 
     # generate the HTML page
     html_out = generate_webpage(merged_data)
@@ -92,24 +138,30 @@ def generate_roast_profile(file_path, roast_id):
 
     logging.info(f"Webpage saved as {webpage_local_path}")
 
-    # upload files to s3
-    webpage_s3_key = f"{roast_directory}/index.html"
-
     # TODO: consider batching uploads
-    upload_to_s3(webpage_local_path, bucket_name, webpage_s3_key, "text/html")
     upload_to_s3(
+        s3_client,
+        webpage_local_path,
+        bucket_name,
+        webpage_s3_key,
+        "text/html",
+    )
+    upload_to_s3(
+        s3_client,
         f"{assets_directory_local}/chart.js",
         bucket_name,
         f"{assets_directory}/chart.js",
         "application/javascript",
     )
     upload_to_s3(
+        s3_client,
         f"{assets_directory_local}/logo.png",
         bucket_name,
         f"{assets_directory}/logo.png",
         "image/png",
     )
     upload_to_s3(
+        s3_client,
         f"{assets_directory_local}/styles.css",
         bucket_name,
         f"{assets_directory}/styles.css",
@@ -127,5 +179,5 @@ def generate_roast_profile(file_path, roast_id):
     generate_qr_code(roast_url, qr_code_local_path)
 
     logging.info(f"Roast Profile generated: {roast_url}")
-    logging.info(f"Processing of {file_path} completed.")
+    logging.info(f"Processing of {roast_path} completed.")
     return roast_url

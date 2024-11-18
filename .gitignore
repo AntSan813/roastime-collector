@@ -1,6 +1,25 @@
-
+# Ignore environment variable files
 .env
 
-/cache
-/roasts
-/qr_codes
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore data directory and its contents
+/data/
+data/
+
+# Ignore cache directory
+/cache/
+
+# Ignore log files
+*.log
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore virtual environment directories
+venv/
+env/

@@ -1,8 +1,8 @@
 from jinja2 import Environment, FileSystemLoader
 from datetime import datetime
 import logging
-import os
 import qrcode
+import json
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -15,15 +15,13 @@ def generate_qr_code(url, output_path):
     logging.info(f"QR code saved as {output_path}")
 
 
-def generate_webpage(roast_data):
+def generate_webpage(data):
     env = Environment(loader=FileSystemLoader("."))
     template = env.get_template("roast_profile_template/index.html")
-    ga_tracking_id = os.getenv("GA_TRACKING_ID")
 
     # prepare data for the template
     template_vars = {
-        "bean": roast_data,
-        "GA_TRACKING_ID": ga_tracking_id,
+        "data": data,
         "current_year": datetime.now().year,
     }
 
