@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container my-4">
-  <h1>Settings</h1>
+  <h1>S3 Config</h1>
   <form method="POST" enctype="multipart/form-data">
     <div class="mb-3">
       <label for="s3_base_url" class="form-label">S3 Base URL</label>
@@ -22,18 +22,6 @@
       <label for="s3_secret_key" class="form-label">S3 Secret Key</label>
       <input type="password" class="form-control" id="s3_secret_key" name="s3_secret_key"
         value="{{ config.s3_secret_key }}">
-    </div>
-
-    <div class="mb-3">
-      <label for="logo" class="form-label">Upload Logo</label>
-      <input type="file" class="form-control" id="logo" name="logo">
-      {% if config.logo_path %}
-      <img src="/{{ config.logo_path }}" alt="Logo" class="img-thumbnail mt-2" style="max-width: 200px;">
-      {% endif %}
-    </div>
-    <div class="mb-3">
-      <label for="footer_text" class="form-label">Footer Text (HTML allowed)</label>
-      <textarea class="form-control" id="footer_text" name="footer_text" rows="3">{{ config.footer_text }}</textarea>
     </div>
     <button type="submit" class="btn btn-primary">Save Settings</button>
   </form>

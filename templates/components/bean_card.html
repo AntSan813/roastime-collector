@@ -1,18 +1,26 @@
 <div class="col-md-6 col-lg-4 mb-4 align-items-stretch" id="bean-{{ bean.id }}">
-  <div class="card h-100 w-100 shadow-sm border-0">
-    <!-- {% if bean.image_file %}
-    <img src="{{ bean.image_file }}" class="card-img-top" alt="{{ bean.name }}">
-    {% else %}
-    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
-      <i class="bi bi-seedling display-1 text-muted"></i>
-    </div>
-    {% endif %} -->
+  <div class="card h-100 w-100 shadow-sm">
+    <!-- 
+        {% if bean.image_file %}
+        <img src=" {{ bean.image_file }}" class="card-img-top" alt="{{ bean.name }}">
+        {% else %}
+        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
+          <i class="bi bi-seedling display-1 text-muted"></i>
+        </div>
+        {% endif %} 
+        -->
 
     <div class="card-body d-flex flex-column">
-      <h5 class="card-title text-primary">{{ bean.name }}</h5>
+      <h5 class="card-title">{{ bean.name }}</h5>
       <p class="text-muted mb-3">Bean ID: {{ bean.id }}</p>
-      <p class="mb-1"><strong>Description</strong>{{ bean.description}}</p>
-      <!-- <p class="mb-1"><strong>Taste Notes:</strong> {{ bean.taste_notes }}</p> -->
+      <div class="mb-3 text-collapse">
+        <p class="collapse" id="{{ bean.id}}-details">
+          {{ bean.description }}
+        </p>
+        <a role="button" class="collapsed" data-bs-toggle="collapse" data-bs-target="#{{ bean.id}}-details"
+          aria-expanded="false" aria-controls="{{ bean.id}}-details"></a>
+      </div>
+      <!-- <p class="mb-1"><strong>Description</strong>{{ bean.description}}</p> -->
       <div class="mt-auto">
         <a href="{{ url_for('bean_detail', bean_id=bean.id) }}" class="btn btn-primary w-100 mb-2">
           <i class="bi bi-info-circle me-2"></i>View Details
@@ -50,7 +58,7 @@
 </div>
 
 
-<script>
+<!-- <script>
   let beanIdToDelete = null;
 
   function deleteBean(beanId) {
@@ -82,4 +90,4 @@
       });
     }
   });
-</script>
+</script> -->

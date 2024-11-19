@@ -100,26 +100,6 @@ def generate_roast_profile(roast_id):
     roast_data = extract_roast_data(roast_data_json)
     merged_data = {**roast_data, **bean, **config}
 
-    # upload files to s3
-    webpage_s3_key = f"{roast_directory}/index.html"
-
-    if "logo_path" in config and config["logo_path"]:
-        logo_local_path = config["logo_path"]
-        logo_filename = os.path.basename(logo_local_path)
-        logo_s3_key = f"{roast_directory}/assets/{logo_filename}"
-        upload_to_s3(
-            s3_client,
-            logo_local_path,
-            bucket_name,
-            logo_s3_key,
-            "image/png",  # Adjust MIME type if necessary
-        )
-        # Set the logo URL for the template
-        merged_data["logo_url"] = f"{base_url}{logo_s3_key}"
-    else:
-        # Use default logo
-        merged_data["logo_url"] = f"{base_url}{assets_directory}/logo.png"
-
     # generate the HTML page
     html_out = generate_webpage(merged_data)
 
@@ -134,9 +114,35 @@ def generate_roast_profile(roast_id):
 
     copy_and_overwrite("roast_profile_template/static/js", assets_directory_local)
     copy_and_overwrite("roast_profile_template/static/css", assets_directory_local)
-    copy_and_overwrite("roast_profile_template/static/images", assets_directory_local)
 
     logging.info(f"Webpage saved as {webpage_local_path}")
+
+    # upload files to s3
+    webpage_s3_key = f"{roast_directory}/index.html"
+
+    logging.info(f"LOGO PATH {config['logo_path']}")
+    if "logo_path" in config and config["logo_path"]:
+        # add file to local assets directory
+        logo_destination_path = os.path.join(assets_directory_local, "logo.png")
+        shutil.copy2(config["logo_path"], logo_destination_path)
+        upload_to_s3(
+            s3_client,
+            logo_destination_path,
+            bucket_name,
+            f"{assets_directory}/logo.png",
+            "image/png",
+        )
+    else:
+        copy_and_overwrite(
+            "roast_profile_template/static/images", assets_directory_local
+        )
+        upload_to_s3(
+            s3_client,
+            f"{assets_directory_local}/logo.png",
+            bucket_name,
+            f"{assets_directory}/logo.png",
+            "image/png",
+        )
 
     # TODO: consider batching uploads
     upload_to_s3(
@@ -152,13 +158,6 @@ def generate_roast_profile(roast_id):
         bucket_name,
         f"{assets_directory}/chart.js",
         "application/javascript",
-    )
-    upload_to_s3(
-        s3_client,
-        f"{assets_directory_local}/logo.png",
-        bucket_name,
-        f"{assets_directory}/logo.png",
-        "image/png",
     )
     upload_to_s3(
         s3_client,

@@ -29,9 +29,10 @@
 <body>
     <header class="masthead mb-auto text-center">
         <div class="px-5 align-items-center justify-content-between">
-
-            {% if logo_url %}
-            <img src="{{ logo_url }}" height="124px" alt="Logo">
+            {% if data['storefront_url'] %}
+            <a href="{{ data['storefront_url']}}">
+                <img src="assets/logo.png" height="124px">
+            </a>
             {% else %}
             <a href="https://d3069d-3.myshopify.com/">
                 <img src="assets/logo.png" height="124px">

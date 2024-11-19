@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-4">
+  <h1>Roast Profile Settings</h1>
+  <form method="POST" enctype="multipart/form-data">
+    <div class="mb-3">
+      <label for="storefront_url" class="form-label">Storefront URL</label>
+      <input type="url" class="form-control" id="storefront_url" name="storefront_url"
+        value="{{config.storefront_url}}">
+    </div>
+    <div class="mb-3">
+      <label for="logo" class="form-label">Upload Logo</label>
+      <input type="file" class="form-control" id="logo" name="logo">
+      {% if config.logo_path %}
+      <img src="/{{ config.logo_path }}" alt="Logo" class="img-thumbnail mt-2" style="max-width: 200px;">
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      <label for="footer_text" class="form-label">Footer Text (HTML allowed)</label>
+      <textarea class="form-control" id="footer_text" name="footer_text" rows="3">{{ config.footer_text }}</textarea>
+    </div>
+    <button type="submit" class="btn btn-primary">Save Settings</button>
+  </form>
+</div>
+{% endblock %}

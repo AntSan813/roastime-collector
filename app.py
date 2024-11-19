@@ -178,32 +178,63 @@ def bean_details(bean_id):
         return "Bean not found", 404
 
 
-@app.route("/settings", methods=["GET", "POST"])
-def settings():
+@app.route("/s3_settings", methods=["GET", "POST"])
+def s3_settings():
     config = get_config()
     if request.method == "POST":
         logo = request.files.get("logo")
-        config["footer_text"] = request.form.get("footer_text")
-        config["s3_base_url"] = request.form.get("s3_base_url")
-        config["s3_bucket_name"] = request.form.get("s3_bucket_name")
-        config["s3_access_key"] = request.form.get("s3_access_key")
-        config["s3_secret_key"] = request.form.get("s3_secret_key")
+        # config["footer_text"] = request.form.get("footer_text")
+        # config["s3_base_url"] = request.form.get("s3_base_url")
+        # config["s3_bucket_name"] = request.form.get("s3_bucket_name")
+        # config["s3_access_key"] = request.form.get("s3_access_key")
+        # config["s3_secret_key"] = request.form.get("s3_secret_key")
+        config = {**config, **request.form.to_dict()}
         if logo:
             logo_path = os.path.join("data", "logo.png")
             logo.save(logo_path)
             config["logo_path"] = logo_path
 
+        print(config)
         with open(os.path.join(DATA_DIR, "config.json"), "w") as f:
             json.dump(config, f)
 
         return render_template(
-            "pages/settings.html", config=config, current_page="settings"
+            "pages/s3_settings.html", config=config, current_page="settings"
         )
-
     else:
         config = get_config()
         return render_template(
-            "pages/settings.html", config=config, current_page="settings"
+            "pages/s3_settings.html", config=config, current_page="settings"
+        )
+
+
+@app.route("/roast_profile_settings", methods=["GET", "POST"])
+def roast_profile_settings():
+    config = get_config()
+    if request.method == "POST":
+        logo = request.files.get("logo")
+        # config["footer_text"] = request.form.get("footer_text")
+        # config["s3_base_url"] = request.form.get("s3_base_url")
+        # config["s3_bucket_name"] = request.form.get("s3_bucket_name")
+        # config["s3_access_key"] = request.form.get("s3_access_key")
+        # config["s3_secret_key"] = request.form.get("s3_secret_key")
+        config = {**config, **request.form.to_dict()}
+        if logo:
+            logo_path = os.path.join("data", "logo.png")
+            logo.save(logo_path)
+            config["logo_path"] = logo_path
+
+        print(config)
+        with open(os.path.join(DATA_DIR, "config.json"), "w") as f:
+            json.dump(config, f)
+
+        return render_template(
+            "pages/roast_profile_settings.html", config=config, current_page="settings"
+        )
+    else:
+        config = get_config()
+        return render_template(
+            "pages/roast_profile_settings.html", config=config, current_page="settings"
         )
 
 
