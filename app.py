@@ -199,12 +199,12 @@ def s3_settings():
             json.dump(config, f)
 
         return render_template(
-            "pages/s3_settings.html", config=config, current_page="settings"
+            "pages/s3_settings.html", config=config, current_page="s3_settings"
         )
     else:
         config = get_config()
         return render_template(
-            "pages/s3_settings.html", config=config, current_page="settings"
+            "pages/s3_settings.html", config=config, current_page="s3_settings"
         )
 
 
@@ -229,12 +229,16 @@ def roast_profile_settings():
             json.dump(config, f)
 
         return render_template(
-            "pages/roast_profile_settings.html", config=config, current_page="settings"
+            "pages/roast_profile_settings.html",
+            config=config,
+            current_page="roast_profile_settings",
         )
     else:
         config = get_config()
         return render_template(
-            "pages/roast_profile_settings.html", config=config, current_page="settings"
+            "pages/roast_profile_settings.html",
+            config=config,
+            current_page="roast_profile_settings",
         )
 
 

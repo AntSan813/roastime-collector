@@ -80,6 +80,7 @@ def bean_from_form(form):
         "id",
         "name",
         "aroma",
+        "grade",
         "origin",
         "region",
         "acidity",
@@ -87,6 +88,7 @@ def bean_from_form(form):
         "altitude",
         "taste_notes",
         "description",
+        "harvest_date",
         "purchase_url",
         "brew_methods",
         "cupping_score",
@@ -172,8 +174,11 @@ def load_roastime_beans():
                     bean_data = json.load(f)
                     bean = {
                         "id": bean_data.get("uid"),
+                        "farm": bean_data.get("farm"),
                         "name": bean_data.get("name"),
+                        "region": bean_data.get("region"),
                         "origin": bean_data.get("country"),
+                        "altitude": bean_data.get("elevation"),
                         "roasttime": True,
                         "roast_count": bean_data.get("roast_count"),
                         "description": bean_data.get("description"),
