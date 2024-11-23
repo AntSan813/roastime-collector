@@ -12,6 +12,8 @@ from flask import (
 )
 from datetime import datetime
 
+from scripts.roast_data import extract_roast_data
+from scripts.html_template import generate_webpage
 from scripts.generate_roast_profile import generate_roast_profile
 from scripts.utils import (
     get_bean,
@@ -67,7 +69,7 @@ def index():
 @app.route("/process/<roast_id>", methods=["POST"])
 def generate_roast_profile_route(roast_id):
     try:
-        url = generate_roast_profile(roast_id)
+        url = generate_roast_profile(roast_id, env="s3")
         last_processed = datetime.now().timestamp() * 1000
         processed_roast = {
             "id": roast_id,
@@ -183,11 +185,6 @@ def s3_settings():
     config = get_config()
     if request.method == "POST":
         logo = request.files.get("logo")
-        # config["footer_text"] = request.form.get("footer_text")
-        # config["s3_base_url"] = request.form.get("s3_base_url")
-        # config["s3_bucket_name"] = request.form.get("s3_bucket_name")
-        # config["s3_access_key"] = request.form.get("s3_access_key")
-        # config["s3_secret_key"] = request.form.get("s3_secret_key")
         config = {**config, **request.form.to_dict()}
         if logo:
             logo_path = os.path.join("data", "logo.png")
@@ -213,16 +210,14 @@ def roast_profile_settings():
     config = get_config()
     if request.method == "POST":
         logo = request.files.get("logo")
-        # config["footer_text"] = request.form.get("footer_text")
-        # config["s3_base_url"] = request.form.get("s3_base_url")
-        # config["s3_bucket_name"] = request.form.get("s3_bucket_name")
-        # config["s3_access_key"] = request.form.get("s3_access_key")
-        # config["s3_secret_key"] = request.form.get("s3_secret_key")
         config = {**config, **request.form.to_dict()}
         if logo:
             logo_path = os.path.join("data", "logo.png")
             logo.save(logo_path)
             config["logo_path"] = logo_path
+
+            logo_path = os.path.join("assets", "logo.png")
+            logo.save(logo_path)
 
         print(config)
         with open(os.path.join(DATA_DIR, "config.json"), "w") as f:
@@ -242,5 +237,17 @@ def roast_profile_settings():
         )
 
 
+@app.route("/preview_profile/<roast_id>")
+def preview_profile(roast_id):
+    roast = get_roast(roast_id)
+    bean = get_bean(roast["beanId"])
+    config = get_config()
+    roast_data = extract_roast_data(roast)
+    merged_data = {**roast_data, **bean, **config}
+
+    html_out = generate_webpage(merged_data, template_env="local")
+    return html_out
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=5001)

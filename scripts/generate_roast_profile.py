@@ -49,7 +49,7 @@ def copy_and_overwrite(from_path, to_path):
             shutil.copy2(source, destination)
 
 
-def generate_roast_profile(roast_id):
+def generate_roast_profile(roast_id, env="local"):
     roast_path = get_roast_path()
     config = get_config()
 
@@ -101,19 +101,22 @@ def generate_roast_profile(roast_id):
     merged_data = {**roast_data, **bean, **config}
 
     # generate the HTML page
-    html_out = generate_webpage(merged_data)
+    html_out = generate_webpage(merged_data, template_env=env)
 
     # save the rendered HTML to the filesystem
     with open(webpage_local_path, "w", encoding="utf-8") as f:
         f.write(html_out)
 
     # copy assets to the local directory
-    assets_directory = os.path.join(roast_directory, "assets")
-    assets_directory_local = os.path.join(roast_directory_local, "assets")
-    os.makedirs(assets_directory_local, exist_ok=True)
+    assets_folder = "static"
+    print(env)
+    if env == "s3":
+        assets_folder = "assets"
 
-    copy_and_overwrite("roast_profile_template/static/js", assets_directory_local)
-    copy_and_overwrite("roast_profile_template/static/css", assets_directory_local)
+    assets_directory = os.path.join(roast_directory, assets_folder)
+    assets_directory_local = os.path.join(roast_directory_local, assets_folder)
+    os.makedirs(assets_directory_local, exist_ok=True)
+    copy_and_overwrite("static", assets_directory_local)
 
     logging.info(f"Webpage saved as {webpage_local_path}")
 
@@ -133,9 +136,6 @@ def generate_roast_profile(roast_id):
             "image/png",
         )
     else:
-        copy_and_overwrite(
-            "roast_profile_template/static/images", assets_directory_local
-        )
         upload_to_s3(
             s3_client,
             f"{assets_directory_local}/logo.png",

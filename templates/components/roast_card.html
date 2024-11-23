@@ -17,34 +17,70 @@
         <li class="list-group-item p-1"><strong>Weight Roasted:</strong> {{ roast.weight_roasted }} oz</li>
       </ul>
 
-      <div class="mt-auto">
+      <div class="mt-auto row g-1">
         {% if bean %}
+
         {% if not roast.is_processed %}
-        <button class="btn btn-warning w-100 mb-2" onclick="processRoast(this, '{{ roast.uid }}')">
-          <i class="bi bi-gear-fill me-2"></i>Publish Roast Profile
-        </button>
+        <div class="col-md-6">
+          <button class="btn btn-secondary w-100" onclick="openPreviewProfileModal('{{ roast.uid }}')">
+            <i class="bi bi-file-earmark-text me-2"></i>Preview Profile
+          </button>
+        </div>
+        <div class="col-md-6">
+          <button class="btn btn-primary w-100" onclick="processRoast(this, '{{ roast.uid }}')">
+            <i class="bi bi-gear-fill me-2"></i>Publish Profile
+          </button>
+        </div>
         {% else %}
-        <a href="{{ roast.profile_link }}" class="btn btn-success w-100 mb-2" target="_blank">
-          <i class="bi bi-eye-fill me-2"></i>View Profile
-        </a>
-        <a href="/download_qr/{{ roast.uid }}" class="btn btn-secondary w-100 mb-2">
-          <i class="bi bi-qr-code me-2"></i>Download QR Code
-        </a>
-        <button class="btn btn-outline-secondary w-100" onclick="processRoast(this, '{{ roast.uid }}')">
+
+        <div class="col-md-6">
+          <button class="btn btn-secondary w-100" onclick="openPreviewProfileModal('{{ roast.uid }}')">
+            <i class="bi bi-file-earmark-text me-2"></i>Preview Profile
+          </button>
+        </div>
+
+        <div class="col-md-6">
+          <a href="{{ roast.profile_link }}" class="btn btn-primary w-100" target="_blank">
+            <i class="bi bi-eye-fill me-2"></i>View Profile
+          </a>
+        </div>
+
+        <div class="col-md-12">
+          <a href="/download_qr/{{ roast.uid }}" class="btn btn-secondary w-100 mb-2">
+            <i class="bi bi-qr-code me-2"></i>Download QR Code
+          </a>
+        </div>
+        <button class="btn btn-secondary col-md-12" onclick="processRoast(this, '{{ roast.uid }}')">
           <i class="bi bi-arrow-clockwise me-2"></i>Republish Roast Profile
         </button>
-        <p class="card-text text-muted mt-2 text-center">
+        <p class="col-md-12 card-text text-muted text-center">
           <small>Last Published: {{ roast.last_processed | datetime }}</small>
         </p>
         {% endif %}
 
         {% else %}
         {% if roast.beanId %}
-        <button class="btn btn-primary w-100 mt-auto" onclick="openBeanFormModal('{{ roast.beanId }}')">
+        <button class="btn btn-primary col-md-12" onclick="openBeanFormModal('{{ roast.beanId }}')">
           <i class="bi bi-plus-circle me-2"></i>Register Bean
         </button>
         {% endif %}
         {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="previewProfileModal" tabindex="-1" aria-labelledby="previewProfileModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg" style="--bs-modal-width: calc(100vw - 64px) !important;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="previewProfileModalLabel">Roast Profile Preview</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-0">
+          <iframe id="previewProfileFrame" src="" width="100%" style="height:calc(100vh - 124px)"
+            frameborder="0"></iframe>
+        </div>
       </div>
     </div>
   </div>
@@ -99,5 +135,12 @@
         toast("Error", `Failed to process roast: ${error.message}`);
         console.error(error)
       })
+  }
+
+  function openPreviewProfileModal(roastId) {
+    const iframe = document.getElementById('previewProfileFrame');
+    iframe.src = `/preview_profile/${roastId}`;
+    const modal = new bootstrap.Modal(document.getElementById('previewProfileModal'));
+    modal.show();
   }
 </script>
