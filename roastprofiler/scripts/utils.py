@@ -1,4 +1,3 @@
-import shutil
 import sys
 import os
 import json
@@ -7,20 +6,23 @@ from watchdog.events import FileSystemEventHandler
 from .roast_data import extract_roast_data
 
 
-DATA_DIR = "data"
-BEANS_FILE = os.path.join(DATA_DIR, "beans.json")
-ROAST_PROFILES_FILE = os.path.join(DATA_DIR, "roast_profiles.json")
+def resource_path(relative_path):
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, f"roastprofiler/{relative_path}")
+
+
+data_dir = resource_path("data")
+os.makedirs(data_dir, exist_ok=True)
+BEANS_FILE = os.path.join(data_dir, "beans.json")
+ROAST_PROFILES_FILE = os.path.join(data_dir, "roast_profiles.json")
+
 
 # Ensure data directory exists
-os.makedirs(DATA_DIR, exist_ok=True)
-
-
-def copy_and_overwrite(from_path, to_path):
-    if os.path.exists(to_path):
-        shutil.rmtree(to_path)
-    shutil.copytree(from_path, to_path)
-
-
 def is_duplicate_bean(new_bean, beans):
     return any(bean["id"] == new_bean["id"] for bean in beans)
 
@@ -204,12 +206,18 @@ def get_roast(id):
 
 
 def get_config():
-    config_file = os.path.join(DATA_DIR, "config.json")
+    config_file = os.path.join(data_dir, "config.json")
     if os.path.exists(config_file):
         with open(config_file, "r") as f:
             return json.load(f)
     else:
         return {}
+
+
+def get_base_dir():
+    if getattr(sys, "frozen", False):
+        return sys._MEIPASS
+    return os.path.dirname(os.path.abspath(__file__))
 
 
 # file system event handler for data directory

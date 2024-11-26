@@ -1,11 +1,4 @@
-import logging
 from datetime import datetime
-
-BEANS_DATA = "data/beans.json"
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
 
 
 def get_roast_level(weight_loss_percentage):

@@ -1,12 +1,13 @@
-from jinja2 import Environment, FileSystemLoader
-from datetime import datetime
-import logging
 import qrcode
+import logging
 from flask import url_for
+from datetime import datetime
+from jinja2 import Environment, FileSystemLoader
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+from .utils import resource_path
+
+
+roast_profile_template_dir = resource_path("roast_profile_template")
 
 
 def generate_qr_code(url, output_path):
@@ -23,13 +24,12 @@ def static_url(filename, env):
 
 
 def generate_webpage(data, template_env="local"):
-    env = Environment(loader=FileSystemLoader("."))
+    env = Environment(loader=FileSystemLoader(roast_profile_template_dir))
     env.globals["url_for"] = url_for
     env.filters["static_url"] = static_url
 
-    template = env.get_template("roast_profile_template/index.html")
+    template = env.get_template("index.html")
 
-    print(template_env)
     # prepare data for the template
     template_vars = {
         "data": data,

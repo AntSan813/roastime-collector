@@ -6,12 +6,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Ignore data directory and its contents
-/data/
-data/
-
-# Ignore cache directory
-/cache/
 
 # Ignore log files
 *.log
@@ -23,3 +17,11 @@ Thumbs.db
 # Ignore virtual environment directories
 venv/
 env/
+
+
+.github/
+data.template
+data
+cache
+build
+dist

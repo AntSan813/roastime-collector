@@ -12,10 +12,10 @@ from flask import (
 )
 from datetime import datetime
 
-from scripts.roast_data import extract_roast_data
-from scripts.html_template import generate_webpage
-from scripts.generate_roast_profile import generate_roast_profile
-from scripts.utils import (
+from .scripts.roast_data import extract_roast_data
+from .scripts.html_template import generate_webpage
+from .scripts.generate_roast_profile import generate_roast_profile
+from .scripts.utils import (
     get_bean,
     get_beans,
     get_roast,
@@ -25,24 +25,36 @@ from scripts.utils import (
     bean_from_form,
     DataFileHandler,
     save_processed_roast,
+    resource_path,
 )
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder=resource_path("templates"),
+    static_folder=resource_path("static"),
+)
 
-DATA_DIR = "data"
+data_dir = resource_path("data")
 
-os.makedirs(DATA_DIR, exist_ok=True)
+os.makedirs(data_dir, exist_ok=True)
 
 beans = []
 roast_profiles = []
 
 data_event_handler = DataFileHandler(beans, roast_profiles)
 observer = Observer()
-observer.schedule(data_event_handler, path=DATA_DIR, recursive=False)
+observer.schedule(data_event_handler, path=data_dir, recursive=False)
 observer.start()
 
+
+log_dir = os.path.join(os.path.expanduser("~"), "RoastProfilerLogs")
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, "app.log")
+
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    filename=log_file,
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
 )
 
 
@@ -94,7 +106,7 @@ def download_qr(roast_id):
 
 @app.route("/data/<path:filename>")
 def data_files(filename):
-    return send_from_directory("data", filename)
+    return send_from_directory(data_dir, filename)
 
 
 @app.route("/roast_card/<roast_id>")
@@ -123,7 +135,7 @@ def add_bean():
     image_file = request.files.get("image_file")
     if image_file:
         image_filename = f"{new_bean['id']}_{image_file.filename}"
-        image_path = os.path.join("data", "bean_images", image_filename)
+        image_path = os.path.join(data_dir, "bean_images", image_filename)
         os.makedirs(os.path.dirname(image_path), exist_ok=True)
         image_file.save(image_path)
         new_bean["image_url"] = f"/{image_path}"
@@ -144,7 +156,7 @@ def edit_bean(bean_id):
         image_file = request.files.get("image_file")
         if image_file:
             image_filename = f"{bean_id}_{image_file.filename}"
-            image_path = os.path.join("data", "bean_images", image_filename)
+            image_path = os.path.join(data_dir, "bean_images", image_filename)
             os.makedirs(os.path.dirname(image_path), exist_ok=True)
             image_file.save(image_path)
             bean["image_url"] = f"/{image_path}"
@@ -187,12 +199,11 @@ def s3_settings():
         logo = request.files.get("logo")
         config = {**config, **request.form.to_dict()}
         if logo:
-            logo_path = os.path.join("data", "logo.png")
+            logo_path = os.path.join(data_dir, "logo.png")
             logo.save(logo_path)
             config["logo_path"] = logo_path
 
-        print(config)
-        with open(os.path.join(DATA_DIR, "config.json"), "w") as f:
+        with open(os.path.join(data_dir, "config.json"), "w") as f:
             json.dump(config, f)
 
         return render_template(
@@ -212,7 +223,7 @@ def roast_profile_settings():
         logo = request.files.get("logo")
         config = {**config, **request.form.to_dict()}
         if logo:
-            logo_path = os.path.join("data", "logo.png")
+            logo_path = os.path.join(data_dir, "logo.png")
             logo.save(logo_path)
             config["logo_path"] = logo_path
 
@@ -220,7 +231,7 @@ def roast_profile_settings():
             logo.save(logo_path)
 
         print(config)
-        with open(os.path.join(DATA_DIR, "config.json"), "w") as f:
+        with open(os.path.join(data_dir, "config.json"), "w") as f:
             json.dump(config, f)
 
         return render_template(
@@ -247,7 +258,3 @@ def preview_profile(roast_id):
 
     html_out = generate_webpage(merged_data, template_env="local")
     return html_out
-
-
-if __name__ == "__main__":
-    app.run(debug=True, port=5001)

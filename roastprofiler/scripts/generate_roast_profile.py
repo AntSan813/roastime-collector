@@ -7,16 +7,11 @@ from botocore.exceptions import ClientError
 
 from .roast_data import extract_roast_data
 from .html_template import generate_qr_code, generate_webpage
-from .utils import get_beans, get_config, get_roast_path
+from .utils import get_beans, get_config, get_roast_path, resource_path
 
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
-
-CACHE_DIR = "cache"
-os.makedirs(CACHE_DIR, exist_ok=True)
+cache_dir = resource_path("cache")
+os.makedirs(cache_dir, exist_ok=True)
 
 
 def upload_to_s3(s3_client, local_file_path, bucket_name, s3_key, content_type):
@@ -36,6 +31,8 @@ def upload_to_s3(s3_client, local_file_path, bucket_name, s3_key, content_type):
 
 
 def copy_and_overwrite(from_path, to_path):
+    from_path = resource_path(from_path)
+
     if not os.path.exists(to_path):
         os.makedirs(to_path)
 
@@ -81,7 +78,7 @@ def generate_roast_profile(roast_id, env="local"):
 
     # define local directories
     roast_directory = f"roasts/{roast_id}"
-    roast_directory_local = f"{CACHE_DIR}/{roast_directory}"
+    roast_directory_local = f"{cache_dir}/{roast_directory}"
 
     os.makedirs(roast_directory_local, exist_ok=True)
 
@@ -109,7 +106,6 @@ def generate_roast_profile(roast_id, env="local"):
 
     # copy assets to the local directory
     assets_folder = "static"
-    print(env)
     if env == "s3":
         assets_folder = "assets"
 
@@ -127,7 +123,8 @@ def generate_roast_profile(roast_id, env="local"):
     if "logo_path" in config and config["logo_path"]:
         # add file to local assets directory
         logo_destination_path = os.path.join(assets_directory_local, "logo.png")
-        shutil.copy2(config["logo_path"], logo_destination_path)
+        logo_path = resource_path(config["logo_path"])
+        shutil.copy2(logo_path, logo_destination_path)
         upload_to_s3(
             s3_client,
             logo_destination_path,
@@ -172,7 +169,7 @@ def generate_roast_profile(roast_id, env="local"):
 
     # generate QR code
     qr_codes_directory = os.path.join("qr_codes")
-    qr_codes_directory_local = os.path.join(CACHE_DIR, qr_codes_directory)
+    qr_codes_directory_local = os.path.join(cache_dir, qr_codes_directory)
     os.makedirs(qr_codes_directory_local, exist_ok=True)
     qr_code_local_path = os.path.join(qr_codes_directory_local, f"{roast_id}_qr.png")
     generate_qr_code(roast_url, qr_code_local_path)

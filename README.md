@@ -22,3 +22,6 @@ The goal of this project is to bridge the gap between coffee roasters and their 
 
 ## License
 This software is available for free to anyone interested in using it. All I ask is that if you use it for your business, let me know so I can add it to the *Roasteries Using This Software* section!
+
+
+
