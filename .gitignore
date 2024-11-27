@@ -19,7 +19,6 @@ venv/
 env/
 
 
-.github/
 data.template
 data
 cache
