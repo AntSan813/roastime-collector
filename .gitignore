@@ -19,7 +19,6 @@ venv/
 env/
 
 
-data.template
 data
 cache
 build
