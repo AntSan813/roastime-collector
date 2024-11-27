@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Roasts</h1>
+    <input type="text" class="form-control d-inline-block" id="searchInput" placeholder="Search roasts..."
+      style="width: 200px;" onkeyup="searchRoasts()">
+  </div>
+
+
+  <div class="row" id="roast-cards-container">
+    {% for roast in roasts %}
+    {% set bean = beans | selectattr('id', 'equalto', roast.beanId) | first %}
+    {% include 'components/roast_card.html' %}
+    {% endfor %}
+  </div>
+
+  <div id="no-results" style="display: none;" class="text-center mt-5">
+    <p class="lead">No roasts found.</p>
+  </div>
+
+</div>
+
+{% include 'components/bean_form_modal.html' %}
+
+<script id="beans-data" type="application/json">
+  {{ beans | tojson }}
+</script>
+<script>
+  var beanFormModal = new bootstrap.Modal(
+    document.getElementById("beanFormModal")
+  )
+
+  function searchRoasts() {
+    const input = document.getElementById("searchInput").value.toLowerCase()
+    const roastCards = document.querySelectorAll("#roast-cards-container .col-md-6")
+    let anyVisible = false
+
+    roastCards.forEach(card => {
+      const roastName = card.querySelector(".card-title").textContent.toLowerCase()
+      if (roastName.includes(input)) {
+        card.style.display = ""
+        anyVisible = true
+      } else {
+        card.style.display = "none"
+      }
+    })
+
+    document.getElementById("no-results").style.display = anyVisible
+      ? "none"
+      : "block"
+  }
+
+  function updateRoastCardsWithNewBean(bean) {
+    const roastCards = document.querySelectorAll(
+      `[data-roast-id][data-bean-id="${bean.id}"]`
+    )
+    roastCards.forEach(roastCardElement => {
+      const roastId = roastCardElement.getAttribute("data-roast-id")
+      fetch(`/roast_card/${roastId}`)
+        .then(response => {
+          if (response.ok) {
+            return response.text()
+          } else {
+            throw new Error("Failed to load updated roast card.")
+          }
+        })
+        .then(html => {
+          const parser = new DOMParser()
+          const doc = parser.parseFromString(html, "text/html")
+          const newRoastCard = doc.body.firstElementChild
+
+          const oldRoastCard = document.getElementById(`roast-${roastId}`)
+          if (oldRoastCard && newRoastCard) {
+            oldRoastCard.replaceWith(newRoastCard)
+          }
+        })
+    })
+  }
+
+  const beanForm = document.getElementById("beanForm")
+  beanForm.addEventListener("submit", function (event) {
+    event.preventDefault()
+    const submitButton = this.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    const originalButtonText = submitButton.innerHTML;
+    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+    fetch("/add_bean", {
+      method: "POST",
+      body: new FormData(this),
+    })
+      .then(response => response.json())
+      .then(data => {
+        beanForm.reset();
+        beanFormModal.hide();
+        toast("Success", "Bean added successfully.");
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+        updateRoastCardsWithNewBean(data.bean);
+      })
+      .catch(error => {
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+        toast("Error", "An error occurred while adding the bean.");
+      });
+  })
+
+  beanFormModal.addEventListener('hidden.bs.modal', function () {
+    beanForm.reset();
+  });
+
+</script>
+{% endblock %}

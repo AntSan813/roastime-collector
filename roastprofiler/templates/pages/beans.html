@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Beans List</h1>
+    <input type="text" class="form-control d-inline-block" id="searchInput" placeholder="Search beans..."
+      style="width: 200px;" onkeyup="searchBeans()">
+  </div>
+
+
+  <div class="row" id="bean-cards-container">
+    {% for bean in beans %}
+    {% include 'components/bean_card.html' %}
+    {% endfor %}
+  </div>
+
+  <div id="no-results" style="display: none;" class="text-center mt-5">
+    <p class="lead">No beans found.</p>
+  </div>
+
+
+</div>
+
+{% include 'components/bean_form_modal.html' %}
+
+<script id="beans-data" type="application/json">
+  {{ beans | tojson }}
+</script>
+
+
+<script>
+  var beanFormModal = new bootstrap.Modal(
+    document.getElementById("beanFormModal")
+  )
+
+  function openBeanFormModal(beanId) {
+    const fields = [
+      "id", "name", "origin", "region", "varietal", "processing_method",
+      "altitude", "taste_notes", "aroma", "acidity", "brew_methods",
+      "cupping_score", "certifications", "description", "purchase_url",
+      "harvest_date", "grade"
+      // "image_file",
+    ];
+
+    const beans = JSON.parse(document.getElementById("beans-data").textContent);
+    const bean = beans.find(b => b.id == beanId);
+    console.log(bean)
+    fields.forEach(field => {
+      document.getElementById(field).value = bean[field] || "";
+    });
+
+    document.getElementById("beanFormModalLabel").textContent = "Edit Bean"
+    beanFormModal.show()
+  }
+
+  function searchBeans() {
+    const input = document.getElementById("searchInput").value.toLowerCase()
+    const beanCards = document.querySelectorAll("#bean-cards-container .col-md-6")
+    let anyVisible = false
+
+
+    beanCards.forEach(card => {
+      const beanName = card.querySelector(".card-title").textContent.toLowerCase()
+      console.log(beanName, input)
+      if (beanName.includes(input)) {
+        card.style.display = ""
+        anyVisible = true
+      } else {
+        card.style.display = "none"
+      }
+    })
+
+    document.getElementById("no-results").style.display = anyVisible
+      ? "none"
+      : "block"
+  }
+
+  function updateBeanCard(beanId) {
+    fetch(`/bean_card/${beanId}`)
+      .then(response => response.text())
+      .then(html => {
+        const parser = new DOMParser()
+        const doc = parser.parseFromString(html, "text/html")
+        const newBeanCard = doc.body.firstElementChild
+        const oldBeanCard = document.getElementById(`bean-${beanId}`)
+        if (oldBeanCard && newBeanCard) {
+          oldBeanCard.replaceWith(newBeanCard)
+        }
+      })
+  }
+
+
+  document.getElementById("beanForm").addEventListener("submit", function (event) {
+    event.preventDefault();
+    const beanId = document.getElementById("id").value;
+    const submitButton = this.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    const originalButtonText = submitButton.innerHTML;
+    submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Saving...';
+    fetch(`/edit_bean/${beanId}`, {
+      method: "PUT",
+      body: new FormData(this),
+    })
+      .then(response => response.json())
+      .then(data => {
+        beanFormModal.hide();
+        toast('Success', 'Bean updated successfully.');
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+        updateBeanCard(beanId);
+      })
+      .catch(error => {
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalButtonText;
+        toast('Error', 'An error occurred while updating the bean.');
+      });
+  });
+
+  let beanIdToDelete = null;
+
+  function deleteBean(beanId) {
+    beanIdToDelete = beanId;
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+    deleteModal.show();
+  }
+
+  document.getElementById('confirmDeleteButton').addEventListener('click', function () {
+    if (beanIdToDelete !== null) {
+      fetch(`/delete_bean/${beanIdToDelete}`, { method: "DELETE" }).then(response => {
+        if (response.ok) {
+          toast("Success", "Bean deleted successfully.");
+
+          // remove bean card from dom if possible; else reload the page
+          const beanCard = document.getElementById(`bean-${beanIdToDelete}`);
+          if (beanCard) {
+            beanCard.remove();
+          } else {
+            location.reload();
+          }
+        } else {
+          toast("Error", "Failed to delete bean.");
+        }
+      }).finally(() => {
+        beanIdToDelete = null;
+        const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
+        deleteModal.hide();
+      });
+    }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,107 @@
+<div class="modal fade" id="beanFormModal" tabindex="-1" aria-labelledby="beanFormModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="beanFormModalLabel">Add/Edit Bean</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{{ url_for('add_bean') }}" id="beanForm" enctype="multipart/form-data">
+          <input type="hidden" id="id" name="id">
+          <div class="row">
+            <div class="mb-3 col-md-6">
+              <label for="name" class="form-label">Bean Name</label>
+              <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+
+            <div class="mb-3 col-md-6">
+              <label for="origin" class="form-label">Origin (Country)</label>
+              <input type="text" class="form-control" id="origin" name="origin" required>
+            </div>
+
+            <div class="mb-3 col-md-12">
+              <label for="description" class="form-label">Description</label>
+              <textarea class="form-control" id="description" name="description" rows="4"></textarea>
+            </div>
+
+            <div class="mb-3 col-md-6">
+              <label for="region" class="form-label">Region</label>
+              <input type="text" class="form-control" id="region" name="region">
+            </div>
+
+            <div class="mb-3 col-md-6">
+              <label for="harvest_date" class="form-label">Harvest Date</label>
+              <input type="text" class="form-control" id="harvest_date" name="harvest_date">
+            </div>
+
+            <div class="mb-3 col-md-6">
+              <label for="altitude" class="form-label">Altitude</label>
+              <input type="text" class="form-control" id="altitude" name="altitude">
+            </div>
+
+            <div class="mb-3 col-md-6">
+              <label for="varietal" class="form-label">Varietal</label>
+              <input type="text" class="form-control" id="varietal" name="varietal">
+            </div>
+
+            <div class="mb-3 col-md-6">
+              <label for="processing_method" class="form-label">Processing Method</label>
+              <input type="text" class="form-control" id="processing_method" name="processing_method">
+            </div>
+
+
+            <div class="mb-3 col-md-6">
+              <label for="aroma" class="form-label">Aroma</label>
+              <input type="text" class="form-control" id="aroma" name="aroma">
+            </div>
+
+            <div class="mb-3 col-md-6">
+              <label for="acidity" class="form-label">Acidity</label>
+              <input type="text" class="form-control" id="acidity" name="acidity">
+            </div>
+
+
+
+            <div class="mb-3 col-md-6">
+              <label for="brew_methods" class="form-label">Brew Methods</label>
+              <input type="text" class="form-control" id="brew_methods" name="brew_methods">
+            </div>
+
+            <div class="mb-3 col-md-6">
+              <label for="cupping_score" class="form-label">Cupping Score</label>
+              <input type="text" class="form-control" id="cupping_score" name="cupping_score">
+            </div>
+
+            <div class="mb-3 col-md-6">
+              <label for="grade" class="form-label">Grade</label>
+              <input type="text" class="form-control" id="grade" name="grade">
+            </div>
+
+            <div class="mb-3 col-md-6">
+              <label for="certifications" class="form-label">Certifications</label>
+              <input type="text" class="form-control" id="certifications" name="certifications">
+            </div>
+
+
+            <div class="mb-3 col-md-12">
+              <label for="purchase_url" class="form-label">Purchase URL</label>
+              <input type="url" class="form-control" id="purchase_url" name="purchase_url">
+            </div>
+
+            <!-- <div class="mb-3 col-md-12">
+              <label for="image_file" class="form-label">Upload Image</label>
+              <input type="file" class="form-control" id="image_file" name="image_file">
+            </div> -->
+
+            <div class="mb-3 col-md-12">
+              <label for="taste_notes" class="form-label">Taste Notes</label>
+              <textarea class="form-control" id="taste_notes" name="taste_notes" rows="3"></textarea>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100">Save Bean</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

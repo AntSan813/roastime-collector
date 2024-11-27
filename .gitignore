@@ -1,2 +1,27 @@
-
+# Ignore environment variable files
 .env
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+
+# Ignore log files
+*.log
+
+# Ignore system files
+.DS_Store
+Thumbs.db
+
+# Ignore virtual environment directories
+venv/
+env/
+
+
+.github/
+data.template
+data
+cache
+build
+dist
