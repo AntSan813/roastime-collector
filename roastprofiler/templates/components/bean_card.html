@@ -1,14 +1,12 @@
 <div class="col-md-6 col-lg-4 mb-4 align-items-stretch" id="bean-{{ bean.id }}">
   <div class="card h-100 w-100 shadow-sm">
-    <!-- 
-        {% if bean.image_file %}
-        <img src=" {{ bean.image_file }}" class="card-img-top" alt="{{ bean.name }}">
-        {% else %}
-        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 180px;">
-          <i class="bi bi-seedling display-1 text-muted"></i>
-        </div>
-        {% endif %} 
-        -->
+    <div class="bean-card__head">
+      <span class="bean-card__monogram">{{ (bean.name or '?')[:1] | upper }}</span>
+      <div class="bean-card__head-meta">
+        {% if bean.origin %}<span class="bean-card__origin">{{ bean.origin }}</span>{% endif %}
+        {% if bean.roasttime %}<span class="bean-card__src">From RoastTime</span>{% endif %}
+      </div>
+    </div>
 
     <div class="card-body d-flex flex-column">
       <h5 class="card-title">{{ bean.name }}</h5>
