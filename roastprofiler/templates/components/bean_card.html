@@ -18,7 +18,6 @@
         <a role="button" class="collapsed" data-bs-toggle="collapse" data-bs-target="#{{ bean.id}}-details"
           aria-expanded="false" aria-controls="{{ bean.id}}-details"></a>
       </div>
-      <!-- <p class="mb-1"><strong>Description</strong>{{ bean.description}}</p> -->
       <div class="mt-auto ">
         <a href="{{ url_for('bean_detail', bean_id=bean.id) }}" class=" btn btn-primary w-100 mb-2">
           <i class="bi bi-info-circle me-2"></i>View Details
@@ -54,38 +53,3 @@
     </div>
   </div>
 </div>
-
-
-<!-- <script>
-  let beanIdToDelete = null;
-
-  function deleteBean(beanId) {
-    beanIdToDelete = beanId;
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
-    deleteModal.show();
-  }
-
-  document.getElementById('confirmDeleteButton').addEventListener('click', function () {
-    if (beanIdToDelete !== null) {
-      fetch(`/delete_bean/${beanIdToDelete}`, { method: "DELETE" }).then(response => {
-        if (response.ok) {
-          toast("Success", "Bean deleted successfully.");
-
-          // remove bean card from dom if possible; else reload the page
-          const beanCard = document.getElementById(`bean-${beanIdToDelete}`);
-          if (beanCard) {
-            beanCard.remove();
-          } else {
-            location.reload();
-          }
-        } else {
-          toast("Error", "Failed to delete bean.");
-        }
-      }).finally(() => {
-        beanIdToDelete = null;
-        const deleteModal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
-        deleteModal.hide();
-      });
-    }
-  });
-</script> -->
