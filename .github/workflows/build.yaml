@@ -26,12 +26,12 @@ jobs:
             platform: macos
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'  # Use your project's Python version
+          python-version: '3.12'
 
       - name: Install dependencies
         run: |
@@ -45,21 +45,21 @@ jobs:
 
       - name: Archive Artifacts
         if: matrix.platform == 'windows'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: RoastProfiler-Windows
           path: dist/RoastProfiler.exe
 
       - name: Archive Artifacts
         if: matrix.platform == 'macos'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: RoastProfiler-macOS
           path: dist/RoastProfiler.app
 
       - name: Archive Artifacts
         if: matrix.platform == 'linux'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: RoastProfiler-Linux
           path: dist/RoastProfiler

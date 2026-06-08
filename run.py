@@ -24,10 +24,10 @@ if __name__ == "__main__":
     # Open the browser after a short delay
     threading.Timer(1, open_browser).start()
 
-    # Keep the main thread running, or the application will exit.
+    # Keep the main thread alive (blocking, not spinning) until interrupted.
     try:
-        while True:
-            pass
+        while flask_thread.is_alive():
+            flask_thread.join(timeout=1)
     except KeyboardInterrupt:
         print("Application interrupted by user.")
         sys.exit(0)
