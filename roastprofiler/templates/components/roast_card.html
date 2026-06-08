@@ -65,6 +65,15 @@
         </button>
         {% endif %}
         {% endif %}
+
+        {% if roast.source == 'uploaded' %}
+        <div class="col-md-12">
+          <button class="btn btn-outline-danger btn-sm w-100 mt-1"
+            onclick="deleteUploadedRoast(this, '{{ roast.uid }}')">
+            <i class="bi bi-trash me-2"></i>Remove Uploaded Roast
+          </button>
+        </div>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -142,5 +151,33 @@
     iframe.src = `/preview_profile/${roastId}`;
     const modal = new bootstrap.Modal(document.getElementById('previewProfileModal'));
     modal.show();
+  }
+
+  function deleteUploadedRoast(button, roastId) {
+    if (!confirm("Remove this uploaded roast? This only deletes the uploaded copy.")) {
+      return
+    }
+    button.disabled = true
+    const originalHTML = button.innerHTML
+    button.innerHTML =
+      '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>'
+
+    fetch(`/delete_uploaded_roast/${roastId}`, { method: "DELETE" })
+      .then(response => response.json().then(data => ({ ok: response.ok, data })))
+      .then(({ ok, data }) => {
+        if (!ok) {
+          throw new Error(data.error || "Failed to remove roast.")
+        }
+        toast("Success", "Uploaded roast removed.")
+        const card = document.getElementById(`roast-${roastId}`)
+        if (card) {
+          card.remove()
+        }
+      })
+      .catch(error => {
+        button.disabled = false
+        button.innerHTML = originalHTML
+        toast("Error", error.message)
+      })
   }
 </script>

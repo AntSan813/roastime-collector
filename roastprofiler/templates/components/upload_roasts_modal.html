@@ -1,0 +1,27 @@
+<div class="modal fade" id="uploadRoastsModal" tabindex="-1" aria-labelledby="uploadRoastsModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="uploadRoastsModalLabel">Upload Roasts</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small">
+          Select one or more RoastTime roast files &mdash; the files in your
+          <code>roast-time/roasts</code> folder (they have no file extension). Uploaded roasts are saved
+          in the app and appear alongside any roasts read from a local RoastTime install.
+        </p>
+        <form id="uploadRoastsForm" enctype="multipart/form-data">
+          <div class="mb-3">
+            <input type="file" class="form-control" id="roast_files" name="roast_files" multiple required>
+          </div>
+          <div id="uploadResult" class="small mb-3"></div>
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-upload me-2"></i>Upload
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

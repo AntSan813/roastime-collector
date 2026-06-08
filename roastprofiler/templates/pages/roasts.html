@@ -4,8 +4,13 @@
 <div class="container my-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Roasts</h1>
-    <input type="text" class="form-control d-inline-block" id="searchInput" placeholder="Search roasts..."
-      style="width: 200px;" onkeyup="searchRoasts()">
+    <div class="d-flex gap-2">
+      <input type="text" class="form-control d-inline-block" id="searchInput" placeholder="Search roasts..."
+        style="width: 200px;" onkeyup="searchRoasts()">
+      <button type="button" class="btn btn-primary text-nowrap" onclick="uploadRoastsModal.show()">
+        <i class="bi bi-upload me-2"></i>Upload Roasts
+      </button>
+    </div>
   </div>
 
 
@@ -23,6 +28,7 @@
 </div>
 
 {% include 'components/bean_form_modal.html' %}
+{% include 'components/upload_roasts_modal.html' %}
 
 <script id="beans-data" type="application/json">
   {{ beans | tojson }}
@@ -31,6 +37,68 @@
   var beanFormModal = new bootstrap.Modal(
     document.getElementById("beanFormModal")
   )
+
+  var uploadRoastsModal = new bootstrap.Modal(
+    document.getElementById("uploadRoastsModal")
+  )
+
+  const uploadRoastsForm = document.getElementById("uploadRoastsForm")
+  uploadRoastsForm.addEventListener("submit", function (event) {
+    event.preventDefault()
+    const submitButton = this.querySelector('button[type="submit"]')
+    const originalButtonText = submitButton.innerHTML
+    submitButton.disabled = true
+    submitButton.innerHTML =
+      '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Uploading...'
+
+    fetch("/upload_roasts", { method: "POST", body: new FormData(this) })
+      .then(response => response.json())
+      .then(data => {
+        submitButton.disabled = false
+        submitButton.innerHTML = originalButtonText
+
+        if (data.error) {
+          toast("Error", data.error)
+          return
+        }
+
+        const added = data.added || []
+        const skipped = data.skipped || []
+        const resultEl = document.getElementById("uploadResult")
+        resultEl.innerHTML = skipped.length
+          ? '<div class="text-warning mb-1">Skipped:</div>' +
+            skipped.map(s => `<div>&bull; ${s.filename}: ${s.reason}</div>`).join("")
+          : ""
+
+        if (added.length > 0) {
+          toast(
+            "Success",
+            `Uploaded ${added.length} roast${added.length === 1 ? "" : "s"}.` +
+              (skipped.length ? ` ${skipped.length} skipped.` : "")
+          )
+          setTimeout(() => location.reload(), 900)
+        } else {
+          toast(
+            "Error",
+            skipped.length
+              ? `No roasts added. ${skipped[0].reason}`
+              : "No roasts added."
+          )
+        }
+      })
+      .catch(() => {
+        submitButton.disabled = false
+        submitButton.innerHTML = originalButtonText
+        toast("Error", "An error occurred while uploading.")
+      })
+  })
+
+  document
+    .getElementById("uploadRoastsModal")
+    .addEventListener("hidden.bs.modal", function () {
+      uploadRoastsForm.reset()
+      document.getElementById("uploadResult").innerHTML = ""
+    })
 
   function searchRoasts() {
     const input = document.getElementById("searchInput").value.toLowerCase()
