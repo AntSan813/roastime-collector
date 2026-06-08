@@ -7,7 +7,7 @@ from botocore.exceptions import ClientError
 
 from .roast_data import extract_roast_data
 from .html_template import generate_qr_code, generate_webpage
-from .utils import get_beans, get_config, get_roast_path, resource_path
+from .utils import get_bean, get_config, find_roast_file, resource_path
 
 
 cache_dir = resource_path("cache")
@@ -47,7 +47,6 @@ def copy_and_overwrite(from_path, to_path):
 
 
 def generate_roast_profile(roast_id, env="local"):
-    roast_path = get_roast_path()
     config = get_config()
 
     base_url = config.get("s3_base_url")
@@ -55,7 +54,12 @@ def generate_roast_profile(roast_id, env="local"):
     s3_access_key = config.get("s3_access_key")
     s3_secret_key = config.get("s3_secret_key")
 
-    logging.info(f"Processing roast file: {roast_path}/{roast_id}")
+    # Resolve the roast file from either source (uploaded or local RoastTime)
+    roast_file_path = find_roast_file(roast_id)
+    if not roast_file_path:
+        raise FileNotFoundError(f"Roast file not found for id {roast_id}")
+
+    logging.info(f"Processing roast file: {roast_file_path}")
 
     s3_client = boto3.client(
         "s3",
@@ -63,18 +67,13 @@ def generate_roast_profile(roast_id, env="local"):
         aws_secret_access_key=s3_secret_key,
     )
 
-    # Load the roast data from roast-time
-    roast_file_path = os.path.join(roast_path, roast_id)
-    if roast_file_path.endswith(".DS_Store"):
-        return
-
     # load the roast data
     try:
         with open(roast_file_path, "r", encoding="utf-8") as f:
             roast_data_json = json.load(f)
     except (UnicodeDecodeError, json.JSONDecodeError) as e:
         logging.error(f"Error reading file {roast_file_path}: {e}")
-        return
+        raise
 
     # define local directories
     roast_directory = f"roasts/{roast_id}"
@@ -85,14 +84,16 @@ def generate_roast_profile(roast_id, env="local"):
     # local file paths
     webpage_local_path = os.path.join(roast_directory_local, "index.html")
 
-    # get bean data
+    # get bean data (matches on either id or uid, returns None if missing)
     bean_id = roast_data_json.get("beanId")
-    beans = get_beans()
-    bean = [bean for bean in beans if bean["id"] == bean_id][0]
+    bean = get_bean(bean_id)
 
     if not bean:
         logging.error(f"Bean ID {bean_id} not found.")
-        return
+        raise ValueError(
+            f"Bean not found for this roast (beanId={bean_id}). "
+            "Register the bean first, then publish."
+        )
 
     roast_data = extract_roast_data(roast_data_json)
     merged_data = {**roast_data, **bean, **config}
@@ -172,8 +173,10 @@ def generate_roast_profile(roast_id, env="local"):
     qr_codes_directory_local = os.path.join(cache_dir, qr_codes_directory)
     os.makedirs(qr_codes_directory_local, exist_ok=True)
     qr_code_local_path = os.path.join(qr_codes_directory_local, f"{roast_id}_qr.png")
-    generate_qr_code(roast_url, qr_code_local_path)
+    generate_qr_code(
+        roast_url, qr_code_local_path, f"{assets_directory_local}/logo.png"
+    )
 
     logging.info(f"Roast Profile generated: {roast_url}")
-    logging.info(f"Processing of {roast_path} completed.")
+    logging.info(f"Processing of {roast_file_path} completed.")
     return roast_url

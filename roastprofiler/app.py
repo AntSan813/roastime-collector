@@ -25,6 +25,9 @@ from .scripts.utils import (
     bean_from_form,
     DataFileHandler,
     save_processed_roast,
+    save_uploaded_roast,
+    delete_uploaded_roast,
+    is_valid_roast_id,
     resource_path,
 )
 
@@ -95,9 +98,69 @@ def generate_roast_profile_route(roast_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/upload_roasts", methods=["POST"])
+def upload_roasts():
+    files = request.files.getlist("roast_files")
+    files = [f for f in files if f and f.filename]
+    if not files:
+        return jsonify({"error": "No files uploaded."}), 400
+
+    added, skipped = [], []
+    for f in files:
+        filename = f.filename
+        try:
+            roast_data_json = json.loads(f.read().decode("utf-8"))
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            skipped.append(
+                {"filename": filename, "reason": "Not a valid JSON roast file."}
+            )
+            continue
+
+        roast_id = roast_data_json.get("uid")
+        if not is_valid_roast_id(roast_id):
+            skipped.append(
+                {"filename": filename, "reason": "Missing or invalid roast id (uid)."}
+            )
+            continue
+
+        # confirm it's a roast the app can actually render before storing it
+        try:
+            extract_roast_data(roast_data_json)
+        except Exception as e:
+            skipped.append(
+                {
+                    "filename": filename,
+                    "reason": f"Not a recognizable RoastTime roast ({e}).",
+                }
+            )
+            continue
+
+        save_uploaded_roast(roast_id, roast_data_json)
+        added.append(
+            {
+                "filename": filename,
+                "id": roast_id,
+                "roastName": roast_data_json.get("roastName"),
+            }
+        )
+
+    return jsonify({"added": added, "skipped": skipped}), 200
+
+
+@app.route("/delete_uploaded_roast/<roast_id>", methods=["DELETE"])
+def delete_uploaded_roast_route(roast_id):
+    try:
+        removed = delete_uploaded_roast(roast_id)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    if removed:
+        return jsonify({"message": "Uploaded roast removed."}), 200
+    return jsonify({"error": "Uploaded roast not found."}), 404
+
+
 @app.route("/download_qr/<roast_id>")
 def download_qr(roast_id):
-    qr_code_path = f"cache/qr_codes/{roast_id}_qr.png"
+    qr_code_path = resource_path(f"cache/qr_codes/{roast_id}_qr.png")
     if os.path.exists(qr_code_path):
         return send_file(qr_code_path, as_attachment=True)
     else:
@@ -251,7 +314,11 @@ def roast_profile_settings():
 @app.route("/preview_profile/<roast_id>")
 def preview_profile(roast_id):
     roast = get_roast(roast_id)
-    bean = get_bean(roast["beanId"])
+    if not roast:
+        return "Roast not found.", 404
+    # bean may be unregistered (common for uploaded roasts) — fall back to {}
+    # so the preview still renders instead of crashing on a missing bean
+    bean = get_bean(roast.get("beanId")) or {}
     config = get_config()
     roast_data = extract_roast_data(roast)
     merged_data = {**roast_data, **bean, **config}
