@@ -1,7 +1,6 @@
 import os
 import json
 import logging
-from watchdog.observers import Observer
 from flask import (
     Flask,
     request,
@@ -23,7 +22,6 @@ from .scripts.utils import (
     get_config,
     get_roasts,
     bean_from_form,
-    DataFileHandler,
     save_processed_roast,
     save_uploaded_roast,
     delete_uploaded_roast,
@@ -40,15 +38,6 @@ app = Flask(
 data_dir = resource_path("data")
 
 os.makedirs(data_dir, exist_ok=True)
-
-beans = []
-roast_profiles = []
-
-data_event_handler = DataFileHandler(beans, roast_profiles)
-observer = Observer()
-observer.schedule(data_event_handler, path=data_dir, recursive=False)
-observer.start()
-
 
 log_dir = os.path.join(os.path.expanduser("~"), "RoastProfilerLogs")
 os.makedirs(log_dir, exist_ok=True)
@@ -94,7 +83,7 @@ def generate_roast_profile_route(roast_id):
         save_processed_roast(processed_roast)
         return jsonify({"profile_link": url, "last_processed": last_processed}), 200
     except Exception as e:
-        print(e)
+        logging.exception("Failed to publish roast profile")
         return jsonify({"error": str(e)}), 500
 
 
@@ -255,60 +244,34 @@ def bean_details(bean_id):
         return "Bean not found", 404
 
 
-@app.route("/s3_settings", methods=["GET", "POST"])
-def s3_settings():
+def _render_settings(template, current_page):
+    """GET shows the saved config; POST merges the form (and optional logo),
+    persists it, then re-renders. Shared by the S3 and profile settings pages."""
     config = get_config()
     if request.method == "POST":
-        logo = request.files.get("logo")
         config = {**config, **request.form.to_dict()}
+        logo = request.files.get("logo")
         if logo:
-            logo_path = os.path.join(data_dir, "logo.png")
-            logo.save(logo_path)
-            config["logo_path"] = logo_path
-
+            logo.save(os.path.join(data_dir, "logo.png"))
+            # Store relative to the resource root so the same value resolves
+            # both as a /data/<file> URL (settings preview) and through
+            # resource_path() when publishing a profile.
+            config["logo_path"] = "data/logo.png"
         with open(os.path.join(data_dir, "config.json"), "w") as f:
             json.dump(config, f)
+    return render_template(template, config=config, current_page=current_page)
 
-        return render_template(
-            "pages/s3_settings.html", config=config, current_page="s3_settings"
-        )
-    else:
-        config = get_config()
-        return render_template(
-            "pages/s3_settings.html", config=config, current_page="s3_settings"
-        )
+
+@app.route("/s3_settings", methods=["GET", "POST"])
+def s3_settings():
+    return _render_settings("pages/s3_settings.html", "s3_settings")
 
 
 @app.route("/roast_profile_settings", methods=["GET", "POST"])
 def roast_profile_settings():
-    config = get_config()
-    if request.method == "POST":
-        logo = request.files.get("logo")
-        config = {**config, **request.form.to_dict()}
-        if logo:
-            logo_path = os.path.join(data_dir, "logo.png")
-            logo.save(logo_path)
-            config["logo_path"] = logo_path
-
-            logo_path = os.path.join("assets", "logo.png")
-            logo.save(logo_path)
-
-        print(config)
-        with open(os.path.join(data_dir, "config.json"), "w") as f:
-            json.dump(config, f)
-
-        return render_template(
-            "pages/roast_profile_settings.html",
-            config=config,
-            current_page="roast_profile_settings",
-        )
-    else:
-        config = get_config()
-        return render_template(
-            "pages/roast_profile_settings.html",
-            config=config,
-            current_page="roast_profile_settings",
-        )
+    return _render_settings(
+        "pages/roast_profile_settings.html", "roast_profile_settings"
+    )
 
 
 @app.route("/preview_profile/<roast_id>")

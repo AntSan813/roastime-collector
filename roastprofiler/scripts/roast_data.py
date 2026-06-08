@@ -66,18 +66,9 @@ def extract_roast_data(data_json):
         "roast_length": round(
             data_json["totalRoastTime"] / 60, 2
         ),  # convert seconds to minutes
-        "weight_green": round(
-            data_json["weightGreen"] * 0.035274, 2
-        ),  # convert grams to ounces
-        "weight_roasted": round(
-            data_json["weightRoasted"] * 0.035274, 2
-        ),  # convert grams to ounces
-        "weight_loss": round(
-            (data_json["weightGreen"] - data_json["weightRoasted"])
-            / data_json["weightGreen"]
-            * 100,
-            2,
-        ),
+        "weight_green": round(weight_green * 0.035274, 2),  # grams to ounces
+        "weight_roasted": round(weight_roasted * 0.035274, 2),  # grams to ounces
+        "weight_loss": round(weight_loss_percentage, 2),
         "roast_id": data_json.get("uid", "1"),
         "time_list": time_list,
         "bean_temp": bean_temp,

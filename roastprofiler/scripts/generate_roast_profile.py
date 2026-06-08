@@ -120,11 +120,12 @@ def generate_roast_profile(roast_id, env="local"):
     # upload files to s3
     webpage_s3_key = f"{roast_directory}/index.html"
 
-    logging.info(f"LOGO PATH {config['logo_path']}")
-    if "logo_path" in config and config["logo_path"]:
+    logo_path_cfg = config.get("logo_path")
+    logging.info(f"LOGO PATH {logo_path_cfg}")
+    if logo_path_cfg:
         # add file to local assets directory
         logo_destination_path = os.path.join(assets_directory_local, "logo.png")
-        logo_path = resource_path(config["logo_path"])
+        logo_path = resource_path(logo_path_cfg)
         shutil.copy2(logo_path, logo_destination_path)
         upload_to_s3(
             s3_client,

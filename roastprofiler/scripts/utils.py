@@ -2,8 +2,8 @@ import re
 import sys
 import os
 import json
+import logging
 
-from watchdog.events import FileSystemEventHandler
 from .roast_data import extract_roast_data
 
 
@@ -36,11 +36,6 @@ ROAST_ID_RE = re.compile(r"^[A-Za-z0-9_-]+$")
 
 def is_valid_roast_id(roast_id):
     return bool(roast_id) and bool(ROAST_ID_RE.match(roast_id))
-
-
-# Ensure data directory exists
-def is_duplicate_bean(new_bean, beans):
-    return any(bean["id"] == new_bean["id"] for bean in beans)
 
 
 def save_beans(beans):
@@ -212,16 +207,16 @@ def get_roasts():
             with open(roast_file_path, "r", encoding="utf-8") as f:
                 roast_data_json = json.load(f)
         except (UnicodeDecodeError, json.JSONDecodeError):
-            print(f"Invalid JSON format in file: {roast_file_path}")
+            logging.warning(f"Invalid JSON in roast file: {roast_file_path}")
             continue
         except Exception as e:
-            print(f"Error reading file {roast_file_path}: {e}")
+            logging.warning(f"Error reading roast file {roast_file_path}: {e}")
             continue
 
         try:
             roast_data = extract_roast_data(roast_data_json)
         except Exception as e:
-            print(f"Error parsing roast {roast_file_path}: {e}")
+            logging.warning(f"Error parsing roast {roast_file_path}: {e}")
             continue
 
         roast_data["source"] = source_name
@@ -265,7 +260,7 @@ def load_roastime_beans():
                     }
                     beans.append(bean)
             except Exception as e:
-                print(f"Error reading bean file {bean_file_path}: {e}")
+                logging.warning(f"Error reading bean file {bean_file_path}: {e}")
     return beans
 
 
@@ -288,24 +283,3 @@ def get_config():
             return json.load(f)
     else:
         return {}
-
-
-def get_base_dir():
-    if getattr(sys, "frozen", False):
-        return sys._MEIPASS
-    return os.path.dirname(os.path.abspath(__file__))
-
-
-# file system event handler for data directory
-class DataFileHandler(FileSystemEventHandler):
-    def __init__(self, beans, roast_profiles):
-        self.beans = beans
-        self.roast_profiles = roast_profiles
-
-    def on_modified(self, event):
-        if event.src_path == BEANS_FILE:
-            self.beans.clear()
-            self.beans.extend(get_beans())
-        elif event.src_path == ROAST_PROFILES_FILE:
-            self.roast_profiles.clear()
-            self.roast_profiles.extend(get_roast_profiles())
