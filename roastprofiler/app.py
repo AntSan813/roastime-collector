@@ -247,33 +247,41 @@ def bean_details(bean_id):
         return "Bean not found", 404
 
 
-def _render_settings(template, current_page):
-    """GET shows the saved config; POST merges the form (and optional logo),
-    persists it, then re-renders. Shared by the S3 and profile settings pages."""
+# Roast-page visibility flags are rendered as checkboxes; an unchecked box is
+# simply absent from the POST, so each is set explicitly by its presence.
+ROAST_PAGE_TOGGLES = (
+    "hide_buy_button",
+    "hide_credit",
+    "hide_chart",
+    "hide_tasting",
+    "hide_provenance",
+)
+
+
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    """Single settings page with three tabs (S3 / Store / Roast Pages) backed by
+    one config.json. The whole form posts together, so text fields, the optional
+    logo, and the roast-page toggles are all saved in one request."""
     config = get_config()
     if request.method == "POST":
         config = {**config, **request.form.to_dict()}
+        for toggle in ROAST_PAGE_TOGGLES:
+            config[toggle] = toggle in request.form
         logo = request.files.get("logo")
-        if logo:
+        if logo and logo.filename:
             logo.save(os.path.join(data_dir, "logo.png"))
-            # Store relative to the resource root so the same value resolves
-            # both as a /data/<file> URL (settings preview) and through
-            # resource_path() when publishing a profile.
+            # Store relative to the resource root so the same value resolves both
+            # as a /data/<file> URL (settings preview) and through resource_path()
+            # when publishing a profile.
             config["logo_path"] = "data/logo.png"
         with open(os.path.join(data_dir, "config.json"), "w") as f:
             json.dump(config, f)
-    return render_template(template, config=config, current_page=current_page)
-
-
-@app.route("/s3_settings", methods=["GET", "POST"])
-def s3_settings():
-    return _render_settings("pages/s3_settings.html", "s3_settings")
-
-
-@app.route("/roast_profile_settings", methods=["GET", "POST"])
-def roast_profile_settings():
-    return _render_settings(
-        "pages/roast_profile_settings.html", "roast_profile_settings"
+    return render_template(
+        "pages/settings.html",
+        config=config,
+        current_page="settings",
+        saved=request.method == "POST",
     )
 
 

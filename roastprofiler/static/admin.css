@@ -336,3 +336,47 @@ code, .font-mono { font-family: var(--rr-mono); }
 .spinner-border { vertical-align: middle; margin-right: 5px; }
 .lead { color: var(--rr-muted); }
 ::selection { background: rgba(var(--rr-ember-rgb), .25); }
+
+/* ---------------- settings page ---------------- */
+.settings-wrap { max-width: 760px; }
+.settings-eyebrow {
+  font-family: var(--rr-mono);
+  font-size: .7rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--rr-ember-deep);
+}
+.settings-head h1 { margin-top: .15rem; }
+
+.rr-tabs { gap: .3rem; }
+.rr-tabs .nav-link {
+  font-weight: 600;
+  font-size: .92rem;
+  color: var(--rr-muted);
+  border: 1px solid transparent;
+  border-radius: 100px;
+  padding: .4rem 1.1rem;
+}
+.rr-tabs .nav-link:hover { color: var(--rr-ink); background: var(--rr-surface-2); }
+.rr-tabs .nav-link.active { color: #fff6ee; background: var(--rr-ember); border-color: var(--rr-ember); }
+
+/* settings panel should not lift on hover like the roast/bean cards do */
+.settings-card, .settings-card:hover { transform: none; box-shadow: var(--rr-shadow); }
+
+.settings-section-title {
+  font-family: var(--rr-mono);
+  font-size: .72rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--rr-faint);
+  margin-bottom: .4rem;
+}
+.settings-hint { color: var(--rr-faint); font-size: .82rem; line-height: 1.45; }
+.settings-divider { border-color: var(--rr-line); opacity: 1; margin: 1.75rem 0; }
+
+.settings-switch { padding-left: 3.2em; margin-bottom: 1.15rem; }
+.settings-switch .form-check-input {
+  width: 2.4em; height: 1.3em; margin-left: -3.2em; margin-top: .15em; cursor: pointer;
+}
+.settings-switch .form-check-label { color: var(--rr-ink); font-weight: 600; cursor: pointer; }
+.settings-switch .form-check-label .settings-hint { font-weight: 400; margin-top: .1rem; }

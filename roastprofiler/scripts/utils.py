@@ -52,6 +52,12 @@ def save_processed_roast(roast):
 
 
 def get_roast_path():
+    # An explicit override (Settings -> Store -> "roast data folder") wins so the
+    # app can read roasts from a non-default location; otherwise fall back to
+    # RoastTime's default per-OS path.
+    override = (get_config().get("roasts_path") or "").strip()
+    if override:
+        return override
     # find roasttime's local roast folder based on the OS
     # ref: https://github.com/jglogan/roastime-data/blob/main/dump_roasts.py#L266
     if sys.platform.startswith("linux"):
