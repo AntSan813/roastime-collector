@@ -17,11 +17,12 @@ from .scripts.generate_roast_profile import generate_roast_profile
 from .scripts.utils import (
     get_bean,
     get_beans,
-    get_roast,
     save_beans,
     get_config,
-    get_roasts,
     bean_from_form,
+    load_roast_full,
+    get_roast_summary,
+    get_roast_summaries,
     save_processed_roast,
     save_uploaded_roast,
     delete_uploaded_roast,
@@ -63,7 +64,7 @@ def datetime_filter(unix_timestamp):
 @app.route("/")
 def index():
     beans = get_beans()
-    roasts = get_roasts()
+    roasts = get_roast_summaries()
     roasts.sort(key=lambda x: x["dateTime"], reverse=True)
     return render_template(
         "pages/roasts.html", roasts=roasts, beans=beans, current_page="index"
@@ -163,7 +164,9 @@ def data_files(filename):
 
 @app.route("/roast_card/<roast_id>")
 def roast_card(roast_id):
-    roast = get_roast(roast_id)
+    roast = get_roast_summary(roast_id)
+    if not roast:
+        return "Roast not found.", 404
     bean = get_bean(roast["beanId"])
     return render_template("components/roast_card.html", roast=roast, bean=bean)
 
@@ -276,14 +279,13 @@ def roast_profile_settings():
 
 @app.route("/preview_profile/<roast_id>")
 def preview_profile(roast_id):
-    roast = get_roast(roast_id)
-    if not roast:
+    roast_data = load_roast_full(roast_id)
+    if not roast_data:
         return "Roast not found.", 404
     # bean may be unregistered (common for uploaded roasts) — fall back to {}
     # so the preview still renders instead of crashing on a missing bean
-    bean = get_bean(roast.get("beanId")) or {}
+    bean = get_bean(roast_data.get("beanId")) or {}
     config = get_config()
-    roast_data = extract_roast_data(roast)
     merged_data = {**roast_data, **bean, **config}
 
     html_out = generate_webpage(merged_data, template_env="local")
