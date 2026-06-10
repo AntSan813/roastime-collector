@@ -2,9 +2,9 @@ import re
 import sys
 import os
 import json
+import logging
 
-from watchdog.events import FileSystemEventHandler
-from .roast_data import extract_roast_data
+from .roast_data import extract_roast_data, extract_roast_summary
 
 
 def resource_path(relative_path):
@@ -38,11 +38,6 @@ def is_valid_roast_id(roast_id):
     return bool(roast_id) and bool(ROAST_ID_RE.match(roast_id))
 
 
-# Ensure data directory exists
-def is_duplicate_bean(new_bean, beans):
-    return any(bean["id"] == new_bean["id"] for bean in beans)
-
-
 def save_beans(beans):
     with open(BEANS_FILE, "w") as f:
         json.dump(beans, f, indent=4)
@@ -57,6 +52,12 @@ def save_processed_roast(roast):
 
 
 def get_roast_path():
+    # An explicit override (Settings -> Store -> "roast data folder") wins so the
+    # app can read roasts from a non-default location; otherwise fall back to
+    # RoastTime's default per-OS path.
+    override = (get_config().get("roasts_path") or "").strip()
+    if override:
+        return override
     # find roasttime's local roast folder based on the OS
     # ref: https://github.com/jglogan/roastime-data/blob/main/dump_roasts.py#L266
     if sys.platform.startswith("linux"):
@@ -204,40 +205,78 @@ def delete_uploaded_roast(roast_id):
     return False
 
 
-def get_roasts():
-    roasts = []
+# Card summaries derive purely from each roast file, which never changes once
+# written, so we memoize them by path + mtime. After the first render the roasts
+# list parses no roast JSON at all — keeping it fast even with many roasts.
+_roast_summary_cache = {}  # path -> (mtime, summary)
+
+
+def _read_roast_summary(path):
+    """Return a roast file's cached card summary, re-parsing only when the file
+    is new or its mtime changed. Returns None if it can't be read/parsed."""
+    try:
+        mtime = os.path.getmtime(path)
+    except OSError:
+        return None
+    cached = _roast_summary_cache.get(path)
+    if cached and cached[0] == mtime:
+        return cached[1]
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            roast_data_json = json.load(f)
+    except (UnicodeDecodeError, json.JSONDecodeError, OSError) as e:
+        logging.warning(f"Invalid roast file {path}: {e}")
+        return None
+    if not roast_data_json.get("uid"):
+        return None
+    summary = extract_roast_summary(roast_data_json)
+    _roast_summary_cache[path] = (mtime, summary)
+    return summary
+
+
+def _with_publish_status(roast, roast_profiles):
+    """Overlay publish status (is_processed + profile_link/last_processed)."""
+    processed = next((r for r in roast_profiles if r["id"] == roast["id"]), None)
+    if processed:
+        return {**roast, **processed, "is_processed": True}
+    return {**roast, "is_processed": False}
+
+
+def get_roast_summaries():
+    """Lightweight roast list for the index page: per-card summary fields only,
+    cached per file. Avoids building the full chart curves for every roast."""
     roast_profiles = get_roast_profiles()
-    for source_name, roast_id, roast_file_path in _list_roast_files():
-        try:
-            with open(roast_file_path, "r", encoding="utf-8") as f:
-                roast_data_json = json.load(f)
-        except (UnicodeDecodeError, json.JSONDecodeError):
-            print(f"Invalid JSON format in file: {roast_file_path}")
+    summaries = []
+    for source_name, _name, path in _list_roast_files():
+        summary = _read_roast_summary(path)
+        if summary is None:
             continue
-        except Exception as e:
-            print(f"Error reading file {roast_file_path}: {e}")
-            continue
-
-        try:
-            roast_data = extract_roast_data(roast_data_json)
-        except Exception as e:
-            print(f"Error parsing roast {roast_file_path}: {e}")
-            continue
-
-        roast_data["source"] = source_name
-
-        # check if roast has been processed
-        processed_roast = next(
-            (r for r in roast_profiles if r["id"] == roast_data["id"]), None
+        summaries.append(
+            _with_publish_status({**summary, "source": source_name}, roast_profiles)
         )
-        if processed_roast:
-            roast_data["is_processed"] = True
-            roast_data = {**roast_data, **processed_roast}
-        else:
-            roast_data["is_processed"] = False
-        roasts.append(roast_data)
+    return summaries
 
-    return roasts
+
+def get_roast_summary(roast_id):
+    """Summary for a single roast — used to re-render one card after publish."""
+    path = find_roast_file(roast_id)
+    if not path:
+        return None
+    summary = _read_roast_summary(path)
+    if summary is None:
+        return None
+    source = "uploaded" if os.path.dirname(path) == UPLOADED_ROASTS_DIR else "roasttime"
+    return _with_publish_status({**summary, "source": source}, get_roast_profiles())
+
+
+def load_roast_full(roast_id):
+    """Full roast data (incl. chart curves) for a single roast, for the preview
+    and publish flows that actually render the curve. None if not found."""
+    path = find_roast_file(roast_id)
+    if not path:
+        return None
+    with open(path, "r", encoding="utf-8") as f:
+        return extract_roast_data(json.load(f))
 
 
 def load_roastime_beans():
@@ -265,7 +304,7 @@ def load_roastime_beans():
                     }
                     beans.append(bean)
             except Exception as e:
-                print(f"Error reading bean file {bean_file_path}: {e}")
+                logging.warning(f"Error reading bean file {bean_file_path}: {e}")
     return beans
 
 
@@ -276,11 +315,6 @@ def get_bean(bean_id):
     )
 
 
-def get_roast(id):
-    roasts = get_roasts()
-    return next((r for r in roasts if r["id"] == id), None)
-
-
 def get_config():
     config_file = os.path.join(data_dir, "config.json")
     if os.path.exists(config_file):
@@ -288,24 +322,3 @@ def get_config():
             return json.load(f)
     else:
         return {}
-
-
-def get_base_dir():
-    if getattr(sys, "frozen", False):
-        return sys._MEIPASS
-    return os.path.dirname(os.path.abspath(__file__))
-
-
-# file system event handler for data directory
-class DataFileHandler(FileSystemEventHandler):
-    def __init__(self, beans, roast_profiles):
-        self.beans = beans
-        self.roast_profiles = roast_profiles
-
-    def on_modified(self, event):
-        if event.src_path == BEANS_FILE:
-            self.beans.clear()
-            self.beans.extend(get_beans())
-        elif event.src_path == ROAST_PROFILES_FILE:
-            self.roast_profiles.clear()
-            self.roast_profiles.extend(get_roast_profiles())

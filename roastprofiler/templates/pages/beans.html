@@ -40,15 +40,14 @@
       "altitude", "taste_notes", "aroma", "acidity", "brew_methods",
       "cupping_score", "certifications", "description", "purchase_url",
       "harvest_date", "grade"
-      // "image_file",
     ];
 
     const beans = JSON.parse(document.getElementById("beans-data").textContent);
     const bean = beans.find(b => b.id == beanId);
-    console.log(bean)
     fields.forEach(field => {
       document.getElementById(field).value = bean[field] || "";
     });
+    setBeanImagePreview(bean.image_url || "");
 
     document.getElementById("beanFormModalLabel").textContent = "Edit Bean"
     beanFormModal.show()
@@ -62,7 +61,6 @@
 
     beanCards.forEach(card => {
       const beanName = card.querySelector(".card-title").textContent.toLowerCase()
-      console.log(beanName, input)
       if (beanName.includes(input)) {
         card.style.display = ""
         anyVisible = true

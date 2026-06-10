@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container my-4 settings-wrap">
+  <div class="settings-head mb-4">
+    <span class="settings-eyebrow">Configuration</span>
+    <h1 class="mb-1">Settings</h1>
+    <p class="text-muted mb-0">Where profiles publish, your storefront, and what shows on customer roast pages.</p>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data" id="settingsForm">
+    <ul class="nav nav-pills rr-tabs mb-4" id="settingsTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-s3" data-bs-toggle="pill" data-bs-target="#pane-s3"
+          type="button" role="tab" aria-controls="pane-s3" aria-selected="true">S3</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-store" data-bs-toggle="pill" data-bs-target="#pane-store"
+          type="button" role="tab" aria-controls="pane-store" aria-selected="false">Store</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-pages" data-bs-toggle="pill" data-bs-target="#pane-pages"
+          type="button" role="tab" aria-controls="pane-pages" aria-selected="false">Roast Pages</button>
+      </li>
+    </ul>
+
+    <div class="tab-content card settings-card">
+      <!-- ============ S3 ============ -->
+      <div class="tab-pane fade show active p-4" id="pane-s3" role="tabpanel" aria-labelledby="tab-s3">
+        <p class="settings-section-title">Publishing destination</p>
+        <p class="settings-hint mb-4">Published roast profiles are uploaded to this S3 bucket. Customer links use the base URL.</p>
+        <div class="mb-3">
+          <label for="s3_base_url" class="form-label">S3 Base URL</label>
+          <input type="text" class="form-control" id="s3_base_url" name="s3_base_url"
+            placeholder="https://cdn.example.com/" value="{{ config.s3_base_url or '' }}">
+        </div>
+        <div class="mb-3">
+          <label for="s3_bucket_name" class="form-label">S3 Bucket Name</label>
+          <input type="text" class="form-control" id="s3_bucket_name" name="s3_bucket_name"
+            value="{{ config.s3_bucket_name or '' }}">
+        </div>
+        <div class="mb-3">
+          <label for="s3_access_key" class="form-label">S3 Access Key</label>
+          <input type="text" class="form-control" id="s3_access_key" name="s3_access_key"
+            autocomplete="off" value="{{ config.s3_access_key or '' }}">
+        </div>
+        <div class="mb-1">
+          <label for="s3_secret_key" class="form-label">S3 Secret Key</label>
+          <input type="password" class="form-control" id="s3_secret_key" name="s3_secret_key"
+            autocomplete="off" value="{{ config.s3_secret_key or '' }}">
+        </div>
+      </div>
+
+      <!-- ============ Store ============ -->
+      <div class="tab-pane fade p-4" id="pane-store" role="tabpanel" aria-labelledby="tab-store">
+        <p class="settings-section-title">Storefront</p>
+        <div class="mb-3">
+          <label for="storefront_url" class="form-label">Storefront URL</label>
+          <input type="url" class="form-control" id="storefront_url" name="storefront_url"
+            placeholder="https://your-roastery.com/" value="{{ config.storefront_url or '' }}">
+          <div class="settings-hint mt-1">Linked from the logo on every roast page.</div>
+        </div>
+        <div class="mb-4">
+          <label for="logo" class="form-label">Logo</label>
+          <input type="file" class="form-control" id="logo" name="logo" accept="image/*">
+          {% if config.logo_path %}
+          <img src="/{{ config.logo_path }}" alt="Current logo" class="img-thumbnail mt-2" style="max-width: 180px;">
+          {% endif %}
+        </div>
+
+        <hr class="settings-divider">
+
+        <p class="settings-section-title">Roast data folder</p>
+        <div class="mb-1">
+          <label for="roasts_path" class="form-label">Local roasts folder (override)</label>
+          <input type="text" class="form-control font-mono" id="roasts_path" name="roasts_path"
+            placeholder="Auto-detected from your RoastTime install" value="{{ config.roasts_path or '' }}">
+          <div class="settings-hint mt-1">
+            Leave blank to auto-detect RoastTime's default location for your OS. Set this to read roasts
+            from a custom folder (the directory that directly contains the roast files). Uploaded roasts
+            always work regardless of this setting.
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ Roast Pages ============ -->
+      <div class="tab-pane fade p-4" id="pane-pages" role="tabpanel" aria-labelledby="tab-pages">
+        <p class="settings-section-title">What customers see</p>
+        <p class="settings-hint mb-4">Toggle sections on the public roast profile pages. Changes apply the next time a profile is previewed or published.</p>
+
+        <div class="form-check form-switch settings-switch">
+          <input class="form-check-input" type="checkbox" role="switch" id="hide_buy_button"
+            name="hide_buy_button" {% if config.hide_buy_button %}checked{% endif %}>
+          <label class="form-check-label" for="hide_buy_button">
+            Hide the &ldquo;Buy this coffee&rdquo; button
+            <span class="settings-hint d-block">Hides the call-to-action even when a bean has a purchase link.</span>
+          </label>
+        </div>
+        <div class="form-check form-switch settings-switch">
+          <input class="form-check-input" type="checkbox" role="switch" id="hide_chart"
+            name="hide_chart" {% if config.hide_chart %}checked{% endif %}>
+          <label class="form-check-label" for="hide_chart">
+            Hide the roast curve chart
+            <span class="settings-hint d-block">Removes the temperature / rate-of-rise chart and its guide.</span>
+          </label>
+        </div>
+        <div class="form-check form-switch settings-switch">
+          <input class="form-check-input" type="checkbox" role="switch" id="hide_provenance"
+            name="hide_provenance" {% if config.hide_provenance %}checked{% endif %}>
+          <label class="form-check-label" for="hide_provenance">
+            Hide the &ldquo;About the Bean&rdquo; provenance table
+            <span class="settings-hint d-block">Origin, region, varietal, altitude, grade, and so on.</span>
+          </label>
+        </div>
+        <div class="form-check form-switch settings-switch">
+          <input class="form-check-input" type="checkbox" role="switch" id="hide_tasting"
+            name="hide_tasting" {% if config.hide_tasting %}checked{% endif %}>
+          <label class="form-check-label" for="hide_tasting">
+            Hide the tasting section
+            <span class="settings-hint d-block">Taste notes, aroma, acidity, and brew methods.</span>
+          </label>
+        </div>
+        <div class="form-check form-switch settings-switch">
+          <input class="form-check-input" type="checkbox" role="switch" id="hide_credit"
+            name="hide_credit" {% if config.hide_credit %}checked{% endif %}>
+          <label class="form-check-label" for="hide_credit">
+            Hide the credit / source line
+            <span class="settings-hint d-block">The &ldquo;Autogenerated&hellip; · Source&rdquo; line linking to the project repo.</span>
+          </label>
+        </div>
+
+        <hr class="settings-divider">
+
+        <div class="mb-1">
+          <label for="footer_text" class="form-label">Footer text (HTML allowed)</label>
+          <textarea class="form-control font-mono" id="footer_text" name="footer_text" rows="3"
+            placeholder="&copy; {{ '{{' }} current_year {{ '}}' }} Your Roastery">{{ config.footer_text or '' }}</textarea>
+          <div class="settings-hint mt-1">Replaces the default footer. Leave blank to use the built-in one. <code>{{ '{{' }} current_year {{ '}}' }}</code> is substituted at publish time.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-actions mt-4">
+      <button type="submit" class="btn btn-primary px-4">
+        <i class="bi bi-check2 me-1"></i>Save Settings
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+  // Keep the active tab across the page reload that a save triggers.
+  (function () {
+    var KEY = "settings-active-tab";
+    var saved = localStorage.getItem(KEY);
+    if (saved) {
+      var btn = document.querySelector('#settingsTabs [data-bs-target="' + saved + '"]');
+      if (btn) bootstrap.Tab.getOrCreateInstance(btn).show();
+    }
+    document.querySelectorAll('#settingsTabs [data-bs-toggle="pill"]').forEach(function (b) {
+      b.addEventListener("shown.bs.tab", function (e) {
+        localStorage.setItem(KEY, e.target.getAttribute("data-bs-target"));
+      });
+    });
+  })();
+
+  {% if saved %}
+  document.addEventListener("DOMContentLoaded", function () {
+    toast("Saved", "Settings updated.");
+  });
+  {% endif %}
+</script>
+{% endblock %}

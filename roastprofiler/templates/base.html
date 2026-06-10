@@ -46,12 +46,8 @@
               href="{{ url_for('beans_list') }}">Beans</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link {% if current_page == 's3_settings' %}active{% endif %}"
-              href="{{ url_for('s3_settings') }}">S3</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link {% if current_page == 'roast_profile_settings' %}active{% endif %}"
-              href="{{ url_for('roast_profile_settings') }}">Profile</a>
+            <a class="nav-link {% if current_page == 'settings' %}active{% endif %}"
+              href="{{ url_for('settings') }}">Settings</a>
           </li>
         </ul>
 

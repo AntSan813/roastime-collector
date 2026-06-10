@@ -1,5 +1,7 @@
 from datetime import datetime
 
+GRAMS_TO_OUNCES = 0.035274
+
 
 def get_roast_level(weight_loss_percentage):
     if weight_loss_percentage < 11:
@@ -66,18 +68,9 @@ def extract_roast_data(data_json):
         "roast_length": round(
             data_json["totalRoastTime"] / 60, 2
         ),  # convert seconds to minutes
-        "weight_green": round(
-            data_json["weightGreen"] * 0.035274, 2
-        ),  # convert grams to ounces
-        "weight_roasted": round(
-            data_json["weightRoasted"] * 0.035274, 2
-        ),  # convert grams to ounces
-        "weight_loss": round(
-            (data_json["weightGreen"] - data_json["weightRoasted"])
-            / data_json["weightGreen"]
-            * 100,
-            2,
-        ),
+        "weight_green": round(weight_green * GRAMS_TO_OUNCES, 2),  # grams to ounces
+        "weight_roasted": round(weight_roasted * GRAMS_TO_OUNCES, 2),  # grams to ounces
+        "weight_loss": round(weight_loss_percentage, 2),
         "roast_id": data_json.get("uid", "1"),
         "time_list": time_list,
         "bean_temp": bean_temp,
@@ -90,4 +83,27 @@ def extract_roast_data(data_json):
         "roast_level": get_roast_level(weight_loss_percentage),
         "id": data_json.get("uid", "1"),
         **data_json,
+    }
+
+
+def extract_roast_summary(data_json):
+    """Card-level roast fields only — no temperature/RoR curves.
+
+    The roasts list only needs a few summary fields per card. Running the full
+    extract_roast_data() (which builds the chart arrays and expands every
+    roaster action across the whole time series) for every roast is what makes
+    the list slow once there are many roasts; this is the cheap path.
+    """
+    uid = data_json.get("uid")
+    weight_green = data_json.get("weightGreen", 0)
+    weight_roasted = data_json.get("weightRoasted", 0)
+    return {
+        "id": uid,
+        "uid": uid,
+        "roastName": data_json.get("roastName"),
+        "beanId": data_json.get("beanId"),
+        "dateTime": data_json.get("dateTime") or 0,
+        "roast_length": round(data_json.get("totalRoastTime", 0) / 60, 2),
+        "weight_green": round(weight_green * GRAMS_TO_OUNCES, 2),
+        "weight_roasted": round(weight_roasted * GRAMS_TO_OUNCES, 2),
     }

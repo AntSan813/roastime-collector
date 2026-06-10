@@ -2,6 +2,7 @@ import shutil
 import logging
 import json
 import os
+import mimetypes
 import boto3
 from botocore.exceptions import ClientError
 
@@ -46,6 +47,15 @@ def copy_and_overwrite(from_path, to_path):
             shutil.copy2(source, destination)
 
 
+def _resolve_bean_image(image_url):
+    """Local filesystem path for a bean's "/data/..." image_url, or None if the
+    URL isn't a local data image or the file no longer exists."""
+    if not image_url or not image_url.startswith("/data/"):
+        return None
+    candidate = resource_path(image_url.lstrip("/"))
+    return candidate if os.path.isfile(candidate) else None
+
+
 def generate_roast_profile(roast_id, env="local"):
     config = get_config()
 
@@ -84,6 +94,13 @@ def generate_roast_profile(roast_id, env="local"):
     # local file paths
     webpage_local_path = os.path.join(roast_directory_local, "index.html")
 
+    # asset locations for this roast (the page references assets relative to itself)
+    assets_folder = "assets" if env == "s3" else "static"
+    assets_directory = os.path.join(roast_directory, assets_folder)
+    assets_directory_local = os.path.join(roast_directory_local, assets_folder)
+    os.makedirs(assets_directory_local, exist_ok=True)
+    copy_and_overwrite("static", assets_directory_local)
+
     # get bean data (matches on either id or uid, returns None if missing)
     bean_id = roast_data_json.get("beanId")
     bean = get_bean(bean_id)
@@ -98,6 +115,19 @@ def generate_roast_profile(roast_id, env="local"):
     roast_data = extract_roast_data(roast_data_json)
     merged_data = {**roast_data, **bean, **config}
 
+    # Bean photo: beans store a local "/data/bean_images/<file>" URL. Ship that
+    # file alongside the page's assets and repoint the template at the asset copy,
+    # so the photo shows on the published profile and not just the local preview.
+    bean_image_local = _resolve_bean_image(bean.get("image_url"))
+    if bean_image_local:
+        bean_image_name = os.path.basename(bean_image_local)
+        shutil.copy2(
+            bean_image_local, os.path.join(assets_directory_local, bean_image_name)
+        )
+        merged_data["image_url"] = f"{assets_folder}/{bean_image_name}"
+    elif (bean.get("image_url") or "").startswith("/data/"):
+        merged_data["image_url"] = None  # local file is gone — use the disc fallback
+
     # generate the HTML page
     html_out = generate_webpage(merged_data, template_env=env)
 
@@ -105,26 +135,17 @@ def generate_roast_profile(roast_id, env="local"):
     with open(webpage_local_path, "w", encoding="utf-8") as f:
         f.write(html_out)
 
-    # copy assets to the local directory
-    assets_folder = "static"
-    if env == "s3":
-        assets_folder = "assets"
-
-    assets_directory = os.path.join(roast_directory, assets_folder)
-    assets_directory_local = os.path.join(roast_directory_local, assets_folder)
-    os.makedirs(assets_directory_local, exist_ok=True)
-    copy_and_overwrite("static", assets_directory_local)
-
     logging.info(f"Webpage saved as {webpage_local_path}")
 
     # upload files to s3
     webpage_s3_key = f"{roast_directory}/index.html"
 
-    logging.info(f"LOGO PATH {config['logo_path']}")
-    if "logo_path" in config and config["logo_path"]:
+    logo_path_cfg = config.get("logo_path")
+    logging.info(f"LOGO PATH {logo_path_cfg}")
+    if logo_path_cfg:
         # add file to local assets directory
         logo_destination_path = os.path.join(assets_directory_local, "logo.png")
-        logo_path = resource_path(config["logo_path"])
+        logo_path = resource_path(logo_path_cfg)
         shutil.copy2(logo_path, logo_destination_path)
         upload_to_s3(
             s3_client,
@@ -140,6 +161,16 @@ def generate_roast_profile(roast_id, env="local"):
             bucket_name,
             f"{assets_directory}/logo.png",
             "image/png",
+        )
+
+    if bean_image_local:
+        bean_image_name = os.path.basename(bean_image_local)
+        upload_to_s3(
+            s3_client,
+            os.path.join(assets_directory_local, bean_image_name),
+            bucket_name,
+            f"{assets_directory}/{bean_image_name}",
+            mimetypes.guess_type(bean_image_name)[0] or "image/png",
         )
 
     # TODO: consider batching uploads

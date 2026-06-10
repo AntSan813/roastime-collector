@@ -1,5 +1,4 @@
 import qrcode
-import qrcode
 import logging
 from PIL import Image
 from flask import url_for
@@ -10,12 +9,6 @@ from .utils import resource_path
 
 
 roast_profile_template_dir = resource_path("roast_profile_template")
-
-
-# def generate_qr_code(url, output_path):
-#     img = qrcode.make(url)
-#     img.save(output_path)
-#     logging.info(f"QR code saved as {output_path}")
 
 
 def generate_qr_code(url, output_path, logo_path):

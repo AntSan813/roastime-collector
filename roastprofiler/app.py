@@ -1,7 +1,6 @@
 import os
 import json
 import logging
-from watchdog.observers import Observer
 from flask import (
     Flask,
     request,
@@ -11,6 +10,7 @@ from flask import (
     send_from_directory,
 )
 from datetime import datetime
+from werkzeug.utils import secure_filename
 
 from .scripts.roast_data import extract_roast_data
 from .scripts.html_template import generate_webpage
@@ -18,12 +18,12 @@ from .scripts.generate_roast_profile import generate_roast_profile
 from .scripts.utils import (
     get_bean,
     get_beans,
-    get_roast,
     save_beans,
     get_config,
-    get_roasts,
     bean_from_form,
-    DataFileHandler,
+    load_roast_full,
+    get_roast_summary,
+    get_roast_summaries,
     save_processed_roast,
     save_uploaded_roast,
     delete_uploaded_roast,
@@ -40,15 +40,6 @@ app = Flask(
 data_dir = resource_path("data")
 
 os.makedirs(data_dir, exist_ok=True)
-
-beans = []
-roast_profiles = []
-
-data_event_handler = DataFileHandler(beans, roast_profiles)
-observer = Observer()
-observer.schedule(data_event_handler, path=data_dir, recursive=False)
-observer.start()
-
 
 log_dir = os.path.join(os.path.expanduser("~"), "RoastProfilerLogs")
 os.makedirs(log_dir, exist_ok=True)
@@ -74,7 +65,7 @@ def datetime_filter(unix_timestamp):
 @app.route("/")
 def index():
     beans = get_beans()
-    roasts = get_roasts()
+    roasts = get_roast_summaries()
     roasts.sort(key=lambda x: x["dateTime"], reverse=True)
     return render_template(
         "pages/roasts.html", roasts=roasts, beans=beans, current_page="index"
@@ -94,7 +85,7 @@ def generate_roast_profile_route(roast_id):
         save_processed_roast(processed_roast)
         return jsonify({"profile_link": url, "last_processed": last_processed}), 200
     except Exception as e:
-        print(e)
+        logging.exception("Failed to publish roast profile")
         return jsonify({"error": str(e)}), 500
 
 
@@ -174,7 +165,9 @@ def data_files(filename):
 
 @app.route("/roast_card/<roast_id>")
 def roast_card(roast_id):
-    roast = get_roast(roast_id)
+    roast = get_roast_summary(roast_id)
+    if not roast:
+        return "Roast not found.", 404
     bean = get_bean(roast["beanId"])
     return render_template("components/roast_card.html", roast=roast, bean=bean)
 
@@ -192,16 +185,29 @@ def bean_detail(bean_id):
     return render_template("pages/bean.html", bean=bean, beans=beans)
 
 
+def _save_bean_image(image_file, bean_id):
+    """Persist an uploaded bean photo under data/bean_images and return the
+    "/data/..." URL the app serves it from, or None if no file was provided.
+
+    The filename is derived from the (sanitized) bean id so re-uploading replaces
+    the previous photo, and the stored URL is relative so it resolves both for the
+    local app and when the file is shipped to S3 with the published profile."""
+    if not image_file or not image_file.filename:
+        return None
+    ext = os.path.splitext(secure_filename(image_file.filename))[1].lower() or ".png"
+    filename = secure_filename(f"{bean_id}{ext}")
+    image_dir = os.path.join(data_dir, "bean_images")
+    os.makedirs(image_dir, exist_ok=True)
+    image_file.save(os.path.join(image_dir, filename))
+    return f"/data/bean_images/{filename}"
+
+
 @app.route("/add_bean", methods=["POST"])
 def add_bean():
     new_bean = bean_from_form(request.form)
-    image_file = request.files.get("image_file")
-    if image_file:
-        image_filename = f"{new_bean['id']}_{image_file.filename}"
-        image_path = os.path.join(data_dir, "bean_images", image_filename)
-        os.makedirs(os.path.dirname(image_path), exist_ok=True)
-        image_file.save(image_path)
-        new_bean["image_url"] = f"/{image_path}"
+    image_url = _save_bean_image(request.files.get("image_file"), new_bean["id"])
+    if image_url:
+        new_bean["image_url"] = image_url
     beans = get_beans()
     beans.append(new_bean)
     save_beans(beans)
@@ -216,13 +222,9 @@ def edit_bean(bean_id):
         updated_bean = bean_from_form(request.form)
         for key, value in updated_bean.items():
             bean[key] = value
-        image_file = request.files.get("image_file")
-        if image_file:
-            image_filename = f"{bean_id}_{image_file.filename}"
-            image_path = os.path.join(data_dir, "bean_images", image_filename)
-            os.makedirs(os.path.dirname(image_path), exist_ok=True)
-            image_file.save(image_path)
-            bean["image_url"] = f"/{image_path}"
+        image_url = _save_bean_image(request.files.get("image_file"), bean_id)
+        if image_url:
+            bean["image_url"] = image_url
         save_beans(beans)
         return jsonify({"message": "Bean updated successfully", "bean": bean}), 200
     else:
@@ -255,72 +257,53 @@ def bean_details(bean_id):
         return "Bean not found", 404
 
 
-@app.route("/s3_settings", methods=["GET", "POST"])
-def s3_settings():
+# Roast-page visibility flags are rendered as checkboxes; an unchecked box is
+# simply absent from the POST, so each is set explicitly by its presence.
+ROAST_PAGE_TOGGLES = (
+    "hide_buy_button",
+    "hide_credit",
+    "hide_chart",
+    "hide_tasting",
+    "hide_provenance",
+)
+
+
+@app.route("/settings", methods=["GET", "POST"])
+def settings():
+    """Single settings page with three tabs (S3 / Store / Roast Pages) backed by
+    one config.json. The whole form posts together, so text fields, the optional
+    logo, and the roast-page toggles are all saved in one request."""
     config = get_config()
     if request.method == "POST":
-        logo = request.files.get("logo")
         config = {**config, **request.form.to_dict()}
-        if logo:
-            logo_path = os.path.join(data_dir, "logo.png")
-            logo.save(logo_path)
-            config["logo_path"] = logo_path
-
+        for toggle in ROAST_PAGE_TOGGLES:
+            config[toggle] = toggle in request.form
+        logo = request.files.get("logo")
+        if logo and logo.filename:
+            logo.save(os.path.join(data_dir, "logo.png"))
+            # Store relative to the resource root so the same value resolves both
+            # as a /data/<file> URL (settings preview) and through resource_path()
+            # when publishing a profile.
+            config["logo_path"] = "data/logo.png"
         with open(os.path.join(data_dir, "config.json"), "w") as f:
             json.dump(config, f)
-
-        return render_template(
-            "pages/s3_settings.html", config=config, current_page="s3_settings"
-        )
-    else:
-        config = get_config()
-        return render_template(
-            "pages/s3_settings.html", config=config, current_page="s3_settings"
-        )
-
-
-@app.route("/roast_profile_settings", methods=["GET", "POST"])
-def roast_profile_settings():
-    config = get_config()
-    if request.method == "POST":
-        logo = request.files.get("logo")
-        config = {**config, **request.form.to_dict()}
-        if logo:
-            logo_path = os.path.join(data_dir, "logo.png")
-            logo.save(logo_path)
-            config["logo_path"] = logo_path
-
-            logo_path = os.path.join("assets", "logo.png")
-            logo.save(logo_path)
-
-        print(config)
-        with open(os.path.join(data_dir, "config.json"), "w") as f:
-            json.dump(config, f)
-
-        return render_template(
-            "pages/roast_profile_settings.html",
-            config=config,
-            current_page="roast_profile_settings",
-        )
-    else:
-        config = get_config()
-        return render_template(
-            "pages/roast_profile_settings.html",
-            config=config,
-            current_page="roast_profile_settings",
-        )
+    return render_template(
+        "pages/settings.html",
+        config=config,
+        current_page="settings",
+        saved=request.method == "POST",
+    )
 
 
 @app.route("/preview_profile/<roast_id>")
 def preview_profile(roast_id):
-    roast = get_roast(roast_id)
-    if not roast:
+    roast_data = load_roast_full(roast_id)
+    if not roast_data:
         return "Roast not found.", 404
     # bean may be unregistered (common for uploaded roasts) — fall back to {}
     # so the preview still renders instead of crashing on a missing bean
-    bean = get_bean(roast.get("beanId")) or {}
+    bean = get_bean(roast_data.get("beanId")) or {}
     config = get_config()
-    roast_data = extract_roast_data(roast)
     merged_data = {**roast_data, **bean, **config}
 
     html_out = generate_webpage(merged_data, template_env="local")
