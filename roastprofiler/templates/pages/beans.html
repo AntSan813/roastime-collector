@@ -40,7 +40,6 @@
       "altitude", "taste_notes", "aroma", "acidity", "brew_methods",
       "cupping_score", "certifications", "description", "purchase_url",
       "harvest_date", "grade"
-      // "image_file",
     ];
 
     const beans = JSON.parse(document.getElementById("beans-data").textContent);
@@ -48,6 +47,7 @@
     fields.forEach(field => {
       document.getElementById(field).value = bean[field] || "";
     });
+    setBeanImagePreview(bean.image_url || "");
 
     document.getElementById("beanFormModalLabel").textContent = "Edit Bean"
     beanFormModal.show()

@@ -88,10 +88,14 @@
               <input type="url" class="form-control" id="purchase_url" name="purchase_url">
             </div>
 
-            <!-- <div class="mb-3 col-md-12">
-              <label for="image_file" class="form-label">Upload Image</label>
-              <input type="file" class="form-control" id="image_file" name="image_file">
-            </div> -->
+            <div class="mb-3 col-md-12">
+              <label for="image_file" class="form-label">Bean Photo</label>
+              <div class="bean-photo-field">
+                <img id="bean_image_preview" class="bean-photo-preview" alt="" hidden>
+                <input type="file" class="form-control" id="image_file" name="image_file" accept="image/*">
+              </div>
+              <div class="form-text">Shown on the published roast profile. JPG or PNG.</div>
+            </div>
 
             <div class="mb-3 col-md-12">
               <label for="taste_notes" class="form-label">Taste Notes</label>
@@ -105,3 +109,31 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Bean photo preview: show the saved photo when editing, and the picked file
+  // immediately on selection. setBeanImagePreview() is called by each page's
+  // openBeanFormModal() (this modal is shared across the roasts/beans/bean pages).
+  (function () {
+    const input = document.getElementById("image_file")
+    const preview = document.getElementById("bean_image_preview")
+    if (!input || !preview) return
+    input.addEventListener("change", function () {
+      const file = this.files && this.files[0]
+      if (file) {
+        preview.src = URL.createObjectURL(file)
+        preview.hidden = false
+      }
+    })
+    window.setBeanImagePreview = function (url) {
+      input.value = ""
+      if (url) {
+        preview.src = url
+        preview.hidden = false
+      } else {
+        preview.removeAttribute("src")
+        preview.hidden = true
+      }
+    }
+  })()
+</script>

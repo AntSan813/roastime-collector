@@ -1,4 +1,7 @@
 <div id="bean-details">
+  {% if bean.image_url %}
+  <img class="bean-detail-photo" src="{{ bean.image_url }}" alt="{{ bean.name }}">
+  {% endif %}
   <div class="mb-4 d-flex align-items-center justify-content-between ">
     <h1 class="m-0">{{ bean.name }}</h1>
     <div>

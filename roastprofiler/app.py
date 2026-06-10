@@ -10,6 +10,7 @@ from flask import (
     send_from_directory,
 )
 from datetime import datetime
+from werkzeug.utils import secure_filename
 
 from .scripts.roast_data import extract_roast_data
 from .scripts.html_template import generate_webpage
@@ -184,16 +185,29 @@ def bean_detail(bean_id):
     return render_template("pages/bean.html", bean=bean, beans=beans)
 
 
+def _save_bean_image(image_file, bean_id):
+    """Persist an uploaded bean photo under data/bean_images and return the
+    "/data/..." URL the app serves it from, or None if no file was provided.
+
+    The filename is derived from the (sanitized) bean id so re-uploading replaces
+    the previous photo, and the stored URL is relative so it resolves both for the
+    local app and when the file is shipped to S3 with the published profile."""
+    if not image_file or not image_file.filename:
+        return None
+    ext = os.path.splitext(secure_filename(image_file.filename))[1].lower() or ".png"
+    filename = secure_filename(f"{bean_id}{ext}")
+    image_dir = os.path.join(data_dir, "bean_images")
+    os.makedirs(image_dir, exist_ok=True)
+    image_file.save(os.path.join(image_dir, filename))
+    return f"/data/bean_images/{filename}"
+
+
 @app.route("/add_bean", methods=["POST"])
 def add_bean():
     new_bean = bean_from_form(request.form)
-    image_file = request.files.get("image_file")
-    if image_file:
-        image_filename = f"{new_bean['id']}_{image_file.filename}"
-        image_path = os.path.join(data_dir, "bean_images", image_filename)
-        os.makedirs(os.path.dirname(image_path), exist_ok=True)
-        image_file.save(image_path)
-        new_bean["image_url"] = f"/{image_path}"
+    image_url = _save_bean_image(request.files.get("image_file"), new_bean["id"])
+    if image_url:
+        new_bean["image_url"] = image_url
     beans = get_beans()
     beans.append(new_bean)
     save_beans(beans)
@@ -208,13 +222,9 @@ def edit_bean(bean_id):
         updated_bean = bean_from_form(request.form)
         for key, value in updated_bean.items():
             bean[key] = value
-        image_file = request.files.get("image_file")
-        if image_file:
-            image_filename = f"{bean_id}_{image_file.filename}"
-            image_path = os.path.join(data_dir, "bean_images", image_filename)
-            os.makedirs(os.path.dirname(image_path), exist_ok=True)
-            image_file.save(image_path)
-            bean["image_url"] = f"/{image_path}"
+        image_url = _save_bean_image(request.files.get("image_file"), bean_id)
+        if image_url:
+            bean["image_url"] = image_url
         save_beans(beans)
         return jsonify({"message": "Bean updated successfully", "bean": bean}), 200
     else:
